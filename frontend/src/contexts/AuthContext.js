@@ -19,10 +19,10 @@ export const AuthProvider = ({ children }) => {
   const [userEntreprise, setUserEntreprise] = useState('');
 
   useEffect(() => {
-    // Simulate auth check with mock data
+    // Simulate auth check with mock data - auto-login for demo
     setTimeout(() => {
       const isLoggedIn = localStorage.getItem('mockLoggedIn');
-      if (isLoggedIn === 'true') {
+      if (isLoggedIn === 'true' || true) { // Auto-login for demo
         setUser(mockUser);
         setSession({ user: mockUser });
         setUserRole(mockUser.role);
