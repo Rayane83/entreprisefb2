@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { mockBlanchimentRows } from '../data/mockData';
 
 const BlanchimentToggle = () => {
-  const { userEntreprise, isReadOnlyForStaff } = useAuth();
+  const { userEntreprise, isReadOnlyForStaff, canAccessStaffConfig } = useAuth();
   const [blanchimentEnabled, setBlanchimentEnabled] = useState(true);
   const [useGlobal, setUseGlobal] = useState(true);
   const [globalSettings, setGlobalSettings] = useState({
