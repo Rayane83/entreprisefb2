@@ -36,6 +36,7 @@ const BlanchimentToggle = () => {
   const [loading, setLoading] = useState(false);
 
   const readonly = isReadOnlyForStaff();
+  const canManageBlanchiment = canAccessStaffConfig(); // Seul le staff peut activer/désactiver
   const currentSettings = useGlobal ? globalSettings : localSettings;
 
   const calculateDuration = (dateRecu, dateRendu) => {
