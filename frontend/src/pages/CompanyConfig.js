@@ -17,7 +17,8 @@ import {
   FileText,
   Plus,
   Trash2,
-  Save
+  Save,
+  ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleGate from '../components/RoleGate';
