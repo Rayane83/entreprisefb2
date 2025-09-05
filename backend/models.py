@@ -240,7 +240,7 @@ class Archive(Base):
     montant = Column(Float, nullable=True)
     period = Column(String(50), nullable=True)
     reference_id = Column(String(36), nullable=True)  # ID de l'objet source
-    metadata = Column(JSON, nullable=True)  # Données additionnelles JSON
+    archive_metadata = Column(JSON, nullable=True)  # Données additionnelles JSON
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
