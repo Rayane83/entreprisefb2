@@ -101,3 +101,122 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Finaliser l'intégration Supabase pour l'application Portail Entreprise Flashback Fa avec authentification Discord, base de données, exports Excel et fonctionnalités de copier-coller"
+
+backend:
+  - task: "Configuration des variables d'environnement Supabase"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Ajout des variables REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_ANON_KEY avec les nouveaux identifiants"
+
+  - task: "Création du schéma de base de données Supabase"
+    implemented: false
+    working: "NA"
+    file: "supabase_schema.sql"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "À implémenter - tables pour dotations, impôts, blanchiment, archives"
+
+  - task: "Configuration des politiques RLS"
+    implemented: false
+    working: "NA"
+    file: "supabase_rls.sql"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "À implémenter - contrôle d'accès basé sur les rôles"
+
+frontend:
+  - task: "Configuration client Supabase"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/lib/supabase.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Mis à jour pour utiliser les nouvelles variables d'environnement avec validation"
+
+  - task: "Service d'authentification Discord"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/services/authService.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Service déjà créé avec simulation des rôles, à tester avec Discord OAuth"
+
+  - task: "Export Excel pour Impôts, Blanchiment, Archives"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/utils/excelExport.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "À implémenter - fonctionnalité d'export en format Excel"
+
+  - task: "Zone copier-coller pour Blanchiment"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/components/BlanchimentToggle.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "À implémenter - zone de saisie par copier-coller"
+
+  - task: "Bouton retour pour pages de configuration"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/pages/CompanyConfig.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "À implémenter - bouton de navigation retour"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Configuration des variables d'environnement Supabase"
+    - "Configuration client Supabase"
+    - "Service d'authentification Discord"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Configuration initiale Supabase terminée avec les nouveaux identifiants. Prêt pour les tests de connexion et l'implémentation du schéma de base de données."
