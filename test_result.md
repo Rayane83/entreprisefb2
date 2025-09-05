@@ -121,7 +121,7 @@ backend:
         comment: "✅ Variables d'environnement Supabase correctement configurées. URL Supabase validée: https://dutvmjnhnrpqoztftzgd.supabase.co. Clé anonyme présente. Configuration backend MongoDB également validée."
 
   - task: "Création du schéma de base de données Supabase"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "supabase_schema.sql"
     stuck_count: 0
@@ -130,10 +130,10 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "À implémenter - tables pour dotations, impôts, blanchiment, archives"
+        comment: "Schéma SQL complet créé avec toutes les tables nécessaires (entreprises, utilisateurs, dotations, blanchiment, archives)"
 
   - task: "Configuration des politiques RLS"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "supabase_rls.sql"
     stuck_count: 0
@@ -142,7 +142,43 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "À implémenter - contrôle d'accès basé sur les rôles"
+        comment: "Politiques RLS complètes implémentées avec contrôle d'accès par rôles et fonctions helper"
+
+  - task: "Services Supabase complets"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/services/supabaseService.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Services complets pour toutes les opérations CRUD (entreprises, utilisateurs, dotations, blanchiment, archives, configuration)"
+
+  - task: "Fonctions Edge Discord"
+    implemented: true
+    working: "NA"
+    file: "/app/supabase_edge_functions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fonctions Edge créées pour gestion des rôles Discord (get-discord-roles et sync-user-roles)"
+
+  - task: "AuthContext intégration Supabase"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/contexts/AuthContext.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Contexte d'authentification mis à jour pour utiliser Supabase avec fallback vers données mock"
 
 frontend:
   - task: "Configuration client Supabase"
