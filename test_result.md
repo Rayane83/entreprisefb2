@@ -225,7 +225,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Configuration des variables d'environnement Supabase"
     - "Configuration client Supabase"
     - "Service d'authentification Discord"
     - "Export Excel pour Impôts, Blanchiment, Archives"
