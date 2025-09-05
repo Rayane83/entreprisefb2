@@ -145,28 +145,47 @@ REACT_APP_FORCE_DISCORD_AUTH=false
 
 ## 🚀 Démarrage de l'Application
 
-### 1. Base de Données
+### 🎯 **Méthode Recommandée (Script Automatique)**
+
 ```bash
-# Démarrer MySQL/MariaDB
+# Lancement complet avec vérification automatique
+cd /app
+./run-app.sh
+```
+
+Le script va :
+- ✅ Vérifier la configuration Discord OAuth
+- ✅ Proposer la configuration si manquante
+- ✅ Démarrer automatiquement tous les services
+- ✅ Afficher les URLs d'accès
+- ✅ Proposer d'ouvrir le navigateur
+
+### 🔧 **Configuration Discord OAuth (Production)**
+
+```bash
+# Configuration sécurisée des tokens Discord
+cd /app
+./configure-discord-tokens.sh
+```
+
+Le script demande de manière sécurisée :
+- 🔑 **Discord Client ID** (validation automatique)
+- 🔐 **Discord Client Secret** (saisie masquée)
+- 🤖 **Discord Bot Token** (optionnel)
+- 🔒 **Génération automatique** de la clé JWT
+
+### 📋 **Méthode Manuelle (Développement)**
+
+```bash
+# 1. Base de données
 service mariadb start
 
-# Appliquer les migrations Alembic
-cd /app/backend
-alembic upgrade head
-```
+# 2. Services
+sudo supervisorctl restart backend frontend
 
-### 2. Backend FastAPI
-```bash
-cd /app/backend
-python server.py
-# API disponible sur http://localhost:8001
-```
-
-### 3. Frontend React
-```bash
-cd /app/frontend
-yarn start
-# Application sur http://localhost:3000
+# 3. Accès
+# Frontend: http://localhost:3000
+# Backend: http://localhost:8001
 ```
 
 ---
