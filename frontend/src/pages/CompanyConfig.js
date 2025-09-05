@@ -233,11 +233,22 @@ const CompanyConfig = () => {
         <div className="border-b bg-card">
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold">Configuration Patron</h1>
-                <p className="text-muted-foreground mt-1">
-                  Paramètres d'entreprise, grades et gestion des employés - {userEntreprise}
-                </p>
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/')}
+                  className="flex items-center"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Retour
+                </Button>
+                <div>
+                  <h1 className="text-3xl font-bold">Configuration Patron</h1>
+                  <p className="text-muted-foreground mt-1">
+                    Paramètres d'entreprise, grades et gestion des employés - {userEntreprise}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Badge variant="outline" className="bg-green-50 text-green-700">
