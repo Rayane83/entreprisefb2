@@ -76,6 +76,19 @@ const Header = () => {
               </Badge>
             )}
 
+            {/* Enterprise Management Button - Staff only */}
+            {canAccessStaffConfig() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEnterpriseManagementClick}
+                className="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Gestion Entreprises
+              </Button>
+            )}
+
             {/* Staff SuperAdmin Button */}
             {canAccessStaffConfig() && (
               <Button
