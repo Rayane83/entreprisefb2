@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Analyser tous mes fichiers, corriger les problèmes et implémenter tout ce qui manque pour que l'application fonctionne à 100%. L'utilisateur demande une application complète avec tous les modules (Dotations, Impôts, Factures/Diplômes, Blanchiment, Archives, Config) entièrement fonctionnels et un script de déploiement."
+user_problem_statement: "Migration complète Supabase → FastAPI + MySQL + SQLAlchemy + Alembic avec authentification Discord OAuth réelle. Supprimer toute logique mock/fake data et implémenter un backend complet avec 15+ tables relationnelles, 20+ endpoints REST, CRUD complet pour toutes les entités (entreprises, employés, transactions, etc.), dashboard financier relié à la base SQL, webhooks Discord, et configuration .env structurée."
 
 backend:
   - task: "Routes de santé API"
