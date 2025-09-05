@@ -84,8 +84,8 @@ main() {
     echo ""
     
     # Vérifier les fichiers .env
-    BACKEND_ENV="/app/backend/.env"
-    FRONTEND_ENV="/app/frontend/.env"
+    BACKEND_ENV="$SCRIPT_DIR/backend/.env"
+    FRONTEND_ENV="$SCRIPT_DIR/frontend/.env"
     
     if [[ ! -f "$BACKEND_ENV" ]] || [[ ! -f "$FRONTEND_ENV" ]]; then
         print_error "Fichiers .env introuvables ! Vérifiez que l'application est correctement installée."
