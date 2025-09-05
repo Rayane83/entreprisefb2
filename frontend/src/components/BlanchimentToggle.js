@@ -330,6 +330,63 @@ const BlanchimentToggle = () => {
         </CardContent>
       </Card>
 
+      {/* Paste Data Area */}
+      {!readonly && blanchimentEnabled && showPasteArea && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Copy className="w-5 h-5 mr-2" />
+              Coller des Données depuis Excel/CSV
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="paste-area">
+                Collez vos données ici (depuis Excel, CSV ou autre tableur)
+              </Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Format attendu: Date Transaction | Montant | Groupe | Employé | Donneur ID | Récepteur ID
+              </p>
+              <Textarea
+                id="paste-area"
+                placeholder="Collez vos données ici... (Ctrl+V)
+Exemple:
+2024-01-15	50000	Alpha	John Doe	123456	789012
+2024-01-16	75000	Beta	Jane Smith	456789	012345"
+                value={pasteData}
+                onChange={(e) => setPasteData(e.target.value)}
+                rows={6}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button onClick={handlePasteData} disabled={!pasteData.trim()}>
+                <Upload className="w-4 h-4 mr-2" />
+                Traiter les Données
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setPasteData('');
+                  setShowPasteArea(false);
+                }}
+              >
+                Annuler
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <p><strong>Conseils:</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Copiez directement depuis Excel (Ctrl+C puis Ctrl+V)</li>
+                <li>Les données peuvent être séparées par des tabulations, virgules ou points-virgules</li>
+                <li>La première ligne peut contenir des en-têtes (optionnel)</li>
+                <li>Les montants doivent être numériques</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Add New Row */}
       {!readonly && blanchimentEnabled && (
         <Card>
