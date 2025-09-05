@@ -23,7 +23,35 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const forceLogoutAndCheckAuth = async () => {
-      console.log('🚨 DÉMARRAGE: Vérification session Discord...');
+      console.log('🚨 DÉMARRAGE: Vérification session...');
+      
+      // VÉRIFIER SI ON EST EN MODE MOCK
+      const useMockAuth = process.env.REACT_APP_USE_MOCK_AUTH === 'true';
+      const forceDiscord = process.env.REACT_APP_FORCE_DISCORD_AUTH === 'true';
+      
+      if (useMockAuth && !forceDiscord) {
+        console.log('🎭 MODE MOCK ACTIVÉ - Connexion automatique');
+        
+        // Créer un utilisateur mock
+        const mockUser = {
+          id: 'mock-user-id',
+          email: 'mockuser@flashbackfa.discord',
+          discord_username: 'Utilisateur Test',
+          discord_id: '123456789012345678',
+          avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
+          entreprise: 'LSPD'
+        };
+        
+        setUser(mockUser);
+        setSession({ user: mockUser });
+        setUserRole('patron'); // Rôle pour accéder à toutes les fonctionnalités
+        setUserEntreprise('LSPD');
+        setIsAuthenticated(true);
+        setLoading(false);
+        
+        console.log('✅ Utilisateur mock connecté:', mockUser.discord_username);
+        return;
+      }
       
       try {
         // FORCER LA SUPPRESSION DE TOUTE SESSION EXISTANTE NON-DISCORD
