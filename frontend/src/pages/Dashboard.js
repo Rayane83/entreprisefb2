@@ -602,6 +602,399 @@ const ImpotsTab = () => {
   );
 };
 
+// Composant Factures/Diplômes complet avec upload
+const FacturesDiplomesTab = () => {
+  const { userRole, userEntreprise, isReadOnlyForStaff } = useAuth();
+  const readonly = isReadOnlyForStaff();
+  
+  const [documents, setDocuments] = useState([
+    {
+      id: 1,
+      name: 'Facture_Janvier_2024.pdf',
+      type: 'Facture',
+      size: 245000,
+      date: '2024-01-25',
+      url: '#',
+      mimeType: 'application/pdf'
+    },
+    {
+      id: 2,
+      name: 'Diplome_Formation_Securite.pdf',
+      type: 'Diplôme',
+      size: 892000,
+      date: '2024-01-20',
+      url: '#',
+      mimeType: 'application/pdf'
+    }
+  ]);
+  
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Types de fichiers acceptés
+  const acceptedTypes = {
+    'application/pdf': '.pdf',
+    'application/msword': '.doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx', 
+    'image/jpeg': '.jpg,.jpeg',
+    'image/png': '.png',
+    'image/gif': '.gif'
+  };
+  
+  const maxFileSize = 10 * 1024 * 1024; // 10MB
+  
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  const getDocType = (filename) => {
+    const lower = filename.toLowerCase();
+    if (lower.includes('facture') || lower.includes('invoice')) return 'Facture';
+    if (lower.includes('diplome') || lower.includes('certificate') || lower.includes('cert')) return 'Diplôme';
+    if (lower.includes('contrat') || lower.includes('contract')) return 'Contrat';
+    if (lower.includes('rapport') || lower.includes('report')) return 'Rapport';
+    return 'Document';
+  };
+  
+  const validateFile = (file) => {
+    if (!Object.keys(acceptedTypes).includes(file.type)) {
+      return { valid: false, error: `Type de fichier non autorisé: ${file.type}` };
+    }
+    
+    if (file.size > maxFileSize) {
+      return { valid: false, error: `Fichier trop volumineux: ${formatFileSize(file.size)}. Maximum: ${formatFileSize(maxFileSize)}` };
+    }
+    
+    return { valid: true };
+  };
+  
+  const handleFileUpload = async (files) => {
+    if (readonly) {
+      toast.error('Action non autorisée en mode lecture seule');
+      return;
+    }
+    
+    setUploading(true);
+    const validFiles = [];
+    const errors = [];
+    
+    // Validation des fichiers
+    for (const file of files) {
+      const validation = validateFile(file);
+      if (validation.valid) {
+        validFiles.push(file);
+      } else {
+        errors.push(`${file.name}: ${validation.error}`);
+      }
+    }
+    
+    if (errors.length > 0) {
+      toast.error(`Erreurs: ${errors.join(', ')}`);
+    }
+    
+    if (validFiles.length === 0) {
+      setUploading(false);
+      return;
+    }
+    
+    try {
+      // Simulation upload avec progress
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        
+        // Simulation délai upload
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        
+        const newDoc = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          type: getDocType(file.name),
+          size: file.size,
+          date: new Date().toISOString().split('T')[0],
+          url: URL.createObjectURL(file),
+          mimeType: file.type
+        };
+        
+        setDocuments(prev => [newDoc, ...prev]);
+        toast.success(`${file.name} téléchargé avec succès`);
+      }
+      
+      if (validFiles.length > 1) {
+        toast.success(`${validFiles.length} documents téléchargés au total`);
+      }
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement');
+    } finally {
+      setUploading(false);
+    }
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
+  };
+  
+  const handleFileInput = (e) => {
+    const files = Array.from(e.target.files);
+    handleFileUpload(files);
+    e.target.value = ''; // Reset input
+  };
+  
+  const handleDelete = async (id) => {
+    if (readonly) {
+      toast.error('Action non autorisée en mode lecture seule');
+      return;
+    }
+    
+    const doc = documents.find(d => d.id === id);
+    if (!doc) return;
+    
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${doc.name}" ?`)) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setDocuments(prev => prev.filter(d => d.id !== id));
+      toast.success(`${doc.name} supprimé`);
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handlePreview = (doc) => {
+    setPreviewDoc(doc);
+    toast.info(`Aperçu de ${doc.name}`);
+  };
+  
+  const handleDownload = (doc) => {
+    const link = document.createElement('a');
+    link.href = doc.url;
+    link.download = doc.name;
+    link.click();
+    toast.success(`Téléchargement de ${doc.name}`);
+  };
+  
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Facture': return 'bg-blue-100 text-blue-800';
+      case 'Diplôme': return 'bg-green-100 text-green-800';
+      case 'Contrat': return 'bg-purple-100 text-purple-800';
+      case 'Rapport': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const stats = {
+    factures: documents.filter(d => d.type === 'Facture').length,
+    diplomes: documents.filter(d => d.type === 'Diplôme').length,
+    contrats: documents.filter(d => d.type === 'Contrat').length,
+    total: documents.length
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Factures / Diplômes</h2>
+          <p className="text-muted-foreground">
+            {userEntreprise && `Entreprise: ${userEntreprise}`} - Gestion des documents
+            {readonly && " (Lecture seule - Staff)"}
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <Badge variant="outline" className="text-sm">
+            {documents.length} document{documents.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Zone d'upload */}
+      {!readonly && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Upload className="w-5 h-5 mr-2" />
+              Zone de Téléchargement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragOver 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-muted-foreground/25 hover:border-primary/50'
+              }`}
+              onDrop={handleDrop}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+            >
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">
+                Glissez vos fichiers ici ou cliquez pour parcourir
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Formats acceptés: PDF, DOC, DOCX, JPG, PNG, GIF (Max {formatFileSize(maxFileSize)})
+              </p>
+              <div className="flex items-center justify-center space-x-4">
+                <Label htmlFor="file-upload" className="cursor-pointer">
+                  <Button disabled={uploading} asChild>
+                    <span>
+                      {uploading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Téléchargement...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Parcourir les fichiers
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                </Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileInput}
+                  accept={Object.values(acceptedTypes).join(',')}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Statistiques */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-blue-600">{stats.factures}</div>
+            <div className="text-sm text-muted-foreground">Factures</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-green-600">{stats.diplomes}</div>
+            <div className="text-sm text-muted-foreground">Diplômes</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-purple-600">{stats.contrats}</div>
+            <div className="text-sm text-muted-foreground">Contrats</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Liste des documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <FileText className="w-5 h-5 mr-2" />
+            Documents ({documents.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {documents.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">Aucun document téléchargé</p>
+              {readonly && (
+                <p className="text-sm text-yellow-600 mt-2">Mode lecture seule - Téléchargement désactivé</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">{doc.name}</span>
+                        <Badge className={getTypeColor(doc.type)}>
+                          {doc.type}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatFileSize(doc.size)} • Téléchargé le {new Date(doc.date).toLocaleDateString('fr-FR')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePreview(doc)}
+                      title="Aperçu"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                      title="Télécharger"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    {!readonly && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(doc.id)}
+                        className="text-destructive hover:text-destructive"
+                        title="Supprimer"
+                        disabled={loading}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Staff : lecture seule */}
+      {readonly && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+            <span className="text-yellow-800">Accès staff : lecture seule (téléchargement et suppression désactivés)</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Autres onglets simples avec specs
 const SimpleTab = ({ title, description, icon: Icon, specs }) => (
   <div className="space-y-6">
