@@ -1830,20 +1830,7 @@ const Dashboard = () => {
 
           {/* 6) Archives — Route : /#archives */}
           <TabsContent value="archives" className="space-y-6">
-            <SimpleTab 
-              title="Archives" 
-              description="Recherche (debounce 300 ms), headers dynamiques, actions par ligne"
-              icon={Archive}
-              specs={[
-                "Recherche (debounce 300 ms, JSON.stringify(row))",
-                "Headers dynamiques",
-                "Actions par ligne : Voir (modal), Éditer (date/montant/description)",
-                "Valider / Refuser / Supprimer (staff)",
-                "Droits d'édition : staff toujours ; patron/co-patron si statut contient 'refus'",
-                "Export Excel : nommage archives_{entreprise|toutes}_{guild}_{YYYY-MM-DD}.xlsx",
-                "Import template (staff) : mapping colonnes selon la 1ère ligne"
-              ]}
-            />
+            <ArchivesTab />
           </TabsContent>
 
           {/* 7) Config (Staff) — Route : /#config */}
