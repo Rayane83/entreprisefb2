@@ -6,10 +6,11 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
-import { Plus, Trash2, Copy, Save, Archive, Calculator } from 'lucide-react';
+import { Plus, Trash2, Copy, Save, Archive, Calculator, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { mockDotationData, mockTaxBrackets } from '../data/mockData';
+import { exportDotations } from '../utils/excelExport';
 
 const DotationForm = () => {
   const { isReadOnlyForStaff, userEntreprise } = useAuth();
