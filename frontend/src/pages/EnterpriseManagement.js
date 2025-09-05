@@ -80,7 +80,8 @@ const EnterpriseManagement = () => {
       setNewEnterprise({
         nom: '',
         discord_guild_id: '',
-        main_role_id: ''
+        main_role_id: '',
+        member_role_id: ''
       });
       
       toast.success('Entreprise ajoutée avec succès');
