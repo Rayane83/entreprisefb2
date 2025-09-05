@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://pmhktnxqponixycsjcwr.supabase.co';
-const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtaGt0bnhxcG9uaXh5Y3NqY3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5Njg0MzcsImV4cCI6MjA1MDU0NDQzN30.2nq0zxe9f4vWXNXv0pnUL9tkEJU-DKWrNIE8Vc7J4gQ';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Variables d\'environnement Supabase manquantes. Vérifiez REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_ANON_KEY');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
