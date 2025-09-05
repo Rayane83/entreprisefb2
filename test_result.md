@@ -228,6 +228,18 @@ security:
         agent: "testing"
         comment: "✅ Connexion MongoDB vérifiée avec succès. Variables MONGO_URL et DB_NAME correctement configurées. Test de persistance des données réussi via API status checks."
 
+  - task: "Sanitisation secrets GitHub"
+    implemented: true
+    working: true
+    file: "fix-complete-with-discord-token.sh"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ RÉSOLU - Token Discord supprimé du fichier fix-complete-with-discord-token.sh. Pattern MTQwMjIzMTAzMTgwNDcyMzIxMA éliminé. Aucun token Discord détecté. Scripts sécurisés configure-discord-tokens.sh, deploy-github-safe.sh, run-app.sh opérationnels. Prêt pour push GitHub."
+
   - task: "Routes API sous /api"
     implemented: true
     working: true
