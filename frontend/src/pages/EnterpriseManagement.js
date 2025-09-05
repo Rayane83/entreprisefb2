@@ -241,6 +241,7 @@ const EnterpriseManagement = () => {
                         <th className="text-left p-4">Nom</th>
                         <th className="text-left p-4">ID Guild Discord</th>
                         <th className="text-left p-4">ID Rôle Principal</th>
+                        <th className="text-left p-4">ID Rôle Membre</th>
                         <th className="text-left p-4">Actions</th>
                       </tr>
                     </thead>
