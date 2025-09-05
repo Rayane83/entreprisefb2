@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { LogOut, Settings, Shield, Building } from 'lucide-react';
+import { LogOut, Settings, Shield, Building, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { mockUserRoles } from '../data/mockData';
 
