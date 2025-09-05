@@ -325,10 +325,18 @@ sudo supervisorctl restart backend frontend
 ## 📞 Support Technique
 
 ### Configuration Discord OAuth
+
+**🔧 Automatique (Recommandé) :**
+```bash
+./configure-discord-tokens.sh
+```
+
+**📋 Manuel :**
 1. Créer application Discord : https://discord.com/developers/applications
 2. Configurer OAuth2 Redirects : `http://localhost:3000/auth/callback`
 3. Récupérer CLIENT_ID et CLIENT_SECRET
 4. Créer bot Discord pour récupération rôles (optionnel)
+5. Mettre à jour les fichiers .env (sauvegarde automatique)
 
 ### Dépannage Courant
 - **Base MySQL inaccessible :** Vérifier service MariaDB
