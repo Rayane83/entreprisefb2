@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         
         setUser(mockUser);
         setSession({ user: mockUser });
-        setUserRole('patron'); // Rôle pour accéder à toutes les fonctionnalités
+        setUserRole('staff'); // Rôle staff pour accéder à toutes les fonctionnalités
         setUserEntreprise('LSPD');
         setIsAuthenticated(true);
         setLoading(false);
