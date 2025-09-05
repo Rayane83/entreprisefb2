@@ -270,8 +270,75 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Fonctionnalité boutons non-fonctionnels"
+    implemented: false
+    working: false
+    file: "multiple"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "L'utilisateur signale que les boutons ne fonctionnent pas dans l'application. Tous les boutons doivent être testés et réparés."
+
+  - task: "Ajout nouvelle entreprise"
+    implemented: false
+    working: "NA"
+    file: "TBD"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Nouvelle fonctionnalité demandée: formulaire pour ajouter une entreprise avec ID Guild Discord, Nom entreprise, et ID du Rôle principal"
+
+  - task: "Configuration rôles depuis Dot guild"
+    implemented: false
+    working: "NA"  
+    file: "TBD"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Configuration des ID rôles Staff/Patron/Co-Patron/DOT qui viennent de la guild Dot"
+
+  - task: "Bouton page principale"
+    implemented: false
+    working: "NA"
+    file: "TBD"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Ajout d'un bouton de navigation vers la page principale"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.1"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Fonctionnalité boutons non-fonctionnels"
+    - "Ajout nouvelle entreprise"
+    - "Configuration rôles depuis Dot guild"
+    - "Bouton page principale"
+  stuck_tasks:
+    - "Fonctionnalité boutons non-fonctionnels"
+  test_all: false
+  test_priority: "high_first"
+
 agent_communication:
   - agent: "main"
     message: "Phase 2 complétée: Intégration Supabase complète avec schéma SQL, politiques RLS, services complets, fonctions Edge Discord, et AuthContext mis à jour. Application prête pour configuration Discord OAuth et tests d'authentification. Instructions de setup fournies dans SETUP_SUPABASE.md."
   - agent: "testing"
     message: "Tests backend complets effectués avec succès. Tous les services fonctionnent correctement: FastAPI backend accessible, MongoDB connecté, APIs CRUD opérationnelles, CORS configuré, variables d'environnement Supabase validées. Configuration Supabase prête côté frontend avec schéma SQL et politiques RLS créés. Backend entièrement fonctionnel."
+  - agent: "main"
+    message: "Nouveaux problèmes signalés par l'utilisateur: boutons non-fonctionnels. Nouvelles fonctionnalités à implémenter: ajout entreprise, configuration rôles Dot guild, bouton page principale. Analyse en cours des problèmes de boutons et planification de l'implémentation des nouvelles fonctionnalités."
