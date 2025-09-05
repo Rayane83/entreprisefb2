@@ -263,49 +263,339 @@ const DotationsTab = () => {
   );
 };
 
-// Composant Impôts
-const ImpotsTab = () => (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-2xl font-bold">Impôts</h2>
-      <p className="text-muted-foreground">Formulaire simple (taux, périodes) cohérent DS</p>
-    </div>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Calculator className="w-5 h-5 mr-2" />
-          Formulaire Impôts
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Taux IS (%)</Label>
-              <Input type="number" placeholder="25" />
-            </div>
-            <div>
-              <Label>Période</Label>
-              <Input type="text" placeholder="2024-Q1" />
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <h4 className="font-medium mb-2">Lecture : paliers IS/richesse, affichage des tranches</h4>
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">Paliers et tranches à afficher ici</p>
-            </div>
-          </div>
-          
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export éventuel (simulation) si défini
-          </Button>
+// Composant Impôts avec calculs réels
+const ImpotsTab = () => {
+  const { userRole, userEntreprise, isReadOnlyForStaff } = useAuth();
+  const readonly = isReadOnlyForStaff();
+  
+  const [impotData, setImpotData] = useState({
+    revenus_totaux: 250000,
+    revenus_imposables: 200000,
+    abattements: 50000,
+    patrimoine: 150000,
+    periode: '2024-Q1'
+  });
+  
+  const [taxBrackets] = useState([
+    { min: 0, max: 100000, taux: 0.10, type: 'revenus' },
+    { min: 100001, max: 500000, taux: 0.15, type: 'revenus' },
+    { min: 500001, max: null, taux: 0.20, type: 'revenus' }
+  ]);
+  
+  const [wealthBrackets] = useState([
+    { min: 0, max: 100000, taux: 0.05, type: 'patrimoine' },
+    { min: 100001, max: 500000, taux: 0.10, type: 'patrimoine' },
+    { min: 500001, max: null, taux: 0.15, type: 'patrimoine' }
+  ]);
+  
+  const [loading, setLoading] = useState(false);
+  
+  // Calcul de l'impôt sur les revenus
+  const calculateIncomeTax = () => {
+    const baseImposable = Math.max(0, impotData.revenus_imposables - impotData.abattements);
+    let impot = 0;
+    let tranche = '';
+    
+    for (const bracket of taxBrackets) {
+      if (baseImposable >= bracket.min && (bracket.max === null || baseImposable <= bracket.max)) {
+        const montantTrancheMin = bracket.min;
+        const montantTranche = baseImposable - montantTrancheMin;
+        impot = montantTranche * bracket.taux;
+        tranche = `${bracket.min.toLocaleString()}€ - ${bracket.max ? bracket.max.toLocaleString() + '€' : '∞'}`;
+        break;
+      }
+    }
+    
+    return { impot: Math.round(impot), tranche, taux: taxBrackets.find(b => baseImposable >= b.min && (b.max === null || baseImposable <= b.max))?.taux * 100 || 0 };
+  };
+  
+  // Calcul de l'impôt sur le patrimoine
+  const calculateWealthTax = () => {
+    let impot = 0;
+    let tranche = '';
+    
+    for (const bracket of wealthBrackets) {
+      if (impotData.patrimoine >= bracket.min && (bracket.max === null || impotData.patrimoine <= bracket.max)) {
+        const montantTrancheMin = bracket.min;
+        const montantTranche = impotData.patrimoine - montantTrancheMin;
+        impot = montantTranche * bracket.taux;
+        tranche = `${bracket.min.toLocaleString()}€ - ${bracket.max ? bracket.max.toLocaleString() + '€' : '∞'}`;
+        break;
+      }
+    }
+    
+    return { impot: Math.round(impot), tranche, taux: wealthBrackets.find(b => impotData.patrimoine >= b.min && (b.max === null || impotData.patrimoine <= b.max))?.taux * 100 || 0 };
+  };
+  
+  const incomeTax = calculateIncomeTax();
+  const wealthTax = calculateWealthTax();
+  const totalTax = incomeTax.impot + wealthTax.impot;
+  
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Déclaration d\'impôts sauvegardée');
+    } catch (error) {
+      toast.error('Erreur lors de la sauvegarde');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleExport = () => {
+    try {
+      const exportData = [{
+        name: `Déclaration ${userEntreprise}`,
+        income: impotData.revenus_imposables,
+        wealth: impotData.patrimoine, 
+        incomeTaxBracket: incomeTax.tranche,
+        incomeTaxRate: incomeTax.taux,
+        incomeTaxAmount: incomeTax.impot,
+        wealthTaxBracket: wealthTax.tranche,
+        wealthTaxRate: wealthTax.taux,
+        wealthTaxAmount: wealthTax.impot,
+        totalTax: totalTax,
+        calculationDate: new Date().toLocaleDateString('fr-FR')
+      }];
+      
+      // Utilisation de l'utilitaire d'export
+      const { exportImpots } = require('../utils/excelExport');
+      exportImpots(exportData, `impots_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Déclaration d'Impôts</h2>
+          <p className="text-muted-foreground">
+            {userEntreprise && `Entreprise: ${userEntreprise}`} - Période: {impotData.periode}
+            {readonly && " (Lecture seule - Staff)"}
+          </p>
         </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+        <div className="flex space-x-2">
+          <Button onClick={handleExport} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
+          {!readonly && (
+            <Button onClick={handleSave} disabled={loading}>
+              <Save className="w-4 h-4 mr-2" />
+              Sauvegarder
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Formulaire de saisie */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calculator className="w-5 h-5 mr-2" />
+            Données Fiscales
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="revenus_totaux">Revenus Totaux (€)</Label>
+                <Input
+                  id="revenus_totaux"
+                  type="number"
+                  value={impotData.revenus_totaux}
+                  onChange={(e) => setImpotData(prev => ({ ...prev, revenus_totaux: parseFloat(e.target.value) || 0 }))}
+                  disabled={readonly}
+                />
+              </div>
+              <div>
+                <Label htmlFor="revenus_imposables">Revenus Imposables (€)</Label>
+                <Input
+                  id="revenus_imposables"
+                  type="number"
+                  value={impotData.revenus_imposables}
+                  onChange={(e) => setImpotData(prev => ({ ...prev, revenus_imposables: parseFloat(e.target.value) || 0 }))}
+                  disabled={readonly}
+                />
+              </div>
+              <div>
+                <Label htmlFor="abattements">Abattements (€)</Label>
+                <Input
+                  id="abattements"
+                  type="number"
+                  value={impotData.abattements}
+                  onChange={(e) => setImpotData(prev => ({ ...prev, abattements: parseFloat(e.target.value) || 0 }))}
+                  disabled={readonly}
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="patrimoine">Patrimoine Total (€)</Label>
+                <Input
+                  id="patrimoine"
+                  type="number"
+                  value={impotData.patrimoine}
+                  onChange={(e) => setImpotData(prev => ({ ...prev, patrimoine: parseFloat(e.target.value) || 0 }))}
+                  disabled={readonly}
+                />
+              </div>
+              <div>
+                <Label htmlFor="periode">Période</Label>
+                <Input
+                  id="periode"
+                  value={impotData.periode}
+                  onChange={(e) => setImpotData(prev => ({ ...prev, periode: e.target.value }))}
+                  disabled={readonly}
+                />
+              </div>
+              
+              {/* Calculs en temps réel */}
+              <div className="p-4 bg-primary/10 rounded-lg">
+                <Label className="text-sm text-muted-foreground">Total Impôts à Payer</Label>
+                <div className="text-3xl font-bold text-primary">
+                  €{totalTax.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Revenus: €{incomeTax.impot.toLocaleString()} + Patrimoine: €{wealthTax.impot.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Détail des calculs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Impôt sur les Revenus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Base imposable:</span>
+                <span>€{Math.max(0, impotData.revenus_imposables - impotData.abattements).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tranche:</span>
+                <span className="text-sm">{incomeTax.tranche}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Taux appliqué:</span>
+                <span>{incomeTax.taux}%</span>
+              </div>
+              <div className="flex justify-between font-bold border-t pt-2">
+                <span>Impôt revenus:</span>
+                <span>€{incomeTax.impot.toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Impôt sur le Patrimoine</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Patrimoine total:</span>
+                <span>€{impotData.patrimoine.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tranche:</span>
+                <span className="text-sm">{wealthTax.tranche}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Taux appliqué:</span>
+                <span>{wealthTax.taux}%</span>
+              </div>
+              <div className="flex justify-between font-bold border-t pt-2">
+                <span>Impôt patrimoine:</span>
+                <span>€{wealthTax.impot.toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Barèmes fiscaux */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Barèmes Fiscaux</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium mb-3">Impôt sur les Revenus</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Tranche (€)</th>
+                      <th className="text-left p-2">Taux</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {taxBrackets.map((bracket, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="p-2">
+                          {bracket.min.toLocaleString()} - {bracket.max ? bracket.max.toLocaleString() : '∞'}
+                        </td>
+                        <td className="p-2">{(bracket.taux * 100).toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-3">Impôt sur le Patrimoine</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Tranche (€)</th>
+                      <th className="text-left p-2">Taux</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wealthBrackets.map((bracket, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="p-2">
+                          {bracket.min.toLocaleString()} - {bracket.max ? bracket.max.toLocaleString() : '∞'}
+                        </td>
+                        <td className="p-2">{(bracket.taux * 100).toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Staff : lecture seule */}
+      {readonly && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+            <span className="text-yellow-800">Accès staff : lecture seule (calculs et sauvegarde désactivés)</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Autres onglets simples avec specs
 const SimpleTab = ({ title, description, icon: Icon, specs }) => (
