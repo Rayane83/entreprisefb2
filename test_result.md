@@ -271,21 +271,24 @@ test_plan:
   test_priority: "high_first"
 
   - task: "Fonctionnalité boutons non-fonctionnels"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "multiple"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
         comment: "L'utilisateur signale que les boutons ne fonctionnent pas dans l'application. Tous les boutons doivent être testés et réparés."
+      - working: true
+        agent: "main"
+        comment: "✅ RÉSOLU: Problème identifié (URL hardcodée) et corrigé. Mode mock activé. Tous les boutons testés et fonctionnels: navigation, export Excel, sauvegarder, etc."
 
   - task: "Ajout nouvelle entreprise"
-    implemented: false
-    working: "NA"
-    file: "TBD"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/EnterpriseManagement.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -293,11 +296,14 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "Nouvelle fonctionnalité demandée: formulaire pour ajouter une entreprise avec ID Guild Discord, Nom entreprise, et ID du Rôle principal"
+      - working: true
+        agent: "main"
+        comment: "✅ IMPLÉMENTÉ: Page complète de gestion des entreprises avec formulaire d'ajout, liste des entreprises, et fonctionnalités CRUD. Testé avec succès."
 
   - task: "Configuration rôles depuis Dot guild"
-    implemented: false
-    working: "NA"  
-    file: "TBD"
+    implemented: true
+    working: true  
+    file: "/app/frontend/src/pages/EnterpriseManagement.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -305,11 +311,14 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "Configuration des ID rôles Staff/Patron/Co-Patron/DOT qui viennent de la guild Dot"
+      - working: true
+        agent: "main"
+        comment: "✅ IMPLÉMENTÉ: Onglet de configuration des rôles avec formulaire pour ID Guild Dot et tous les rôles. Aperçu en temps réel inclus."
 
   - task: "Bouton page principale"
-    implemented: false
-    working: "NA"
-    file: "TBD"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/EnterpriseManagement.js"
     stuck_count: 0
     priority: "medium"
     needs_retesting: false
@@ -317,6 +326,21 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "Ajout d'un bouton de navigation vers la page principale"
+      - working: true
+        agent: "main"
+        comment: "✅ IMPLÉMENTÉ: Bouton 'Page Principale' ajouté dans le header de la page de gestion. Navigation testée et fonctionnelle."
+
+  - task: "Bouton Gestion Entreprises dans header"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Header.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ IMPLÉMENTÉ: Bouton 'Gestion Entreprises' ajouté dans le header, visible pour les utilisateurs avec rôle staff. Navigation vers la page de gestion fonctionnelle."
 
 metadata:
   created_by: "main_agent"
