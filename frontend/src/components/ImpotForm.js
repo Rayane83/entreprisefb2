@@ -4,9 +4,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { Calculator, Save, FileText } from 'lucide-react';
+import { Calculator, Save, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { exportImpots } from '../utils/excelExport';
 
 const ImpotForm = () => {
   const { userEntreprise, isReadOnlyForStaff } = useAuth();
