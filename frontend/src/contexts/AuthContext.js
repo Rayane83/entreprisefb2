@@ -22,29 +22,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    const forceLogoutAndCheckAuth = async () => {
-      console.log('🚨 DÉMARRAGE: Vérification session...');
+    const initializeAuth = async () => {
+      console.log('🚨 DÉMARRAGE: Vérification session avec nouveau backend...');
       
-      // VÉRIFIER SI ON EST EN MODE MOCK
+      // VÉRIFIER SI ON EST EN MODE MOCK (conservé pour compatibilité de développement)
       const useMockAuth = process.env.REACT_APP_USE_MOCK_AUTH === 'true';
       const forceDiscord = process.env.REACT_APP_FORCE_DISCORD_AUTH === 'true';
       
       if (useMockAuth && !forceDiscord) {
         console.log('🎭 MODE MOCK ACTIVÉ - Connexion automatique');
         
-        // Créer un utilisateur mock
         const mockUser = {
           id: 'mock-user-id',
           email: 'mockuser@flashbackfa.discord',
           discord_username: 'Utilisateur Test',
           discord_id: '123456789012345678',
           avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
-          entreprise: 'LSPD'
+          role: 'patron',
+          enterprise_id: 'mock-enterprise'
         };
         
         setUser(mockUser);
         setSession({ user: mockUser });
-        setUserRole('patron'); // Rôle patron pour tester zone de collage
+        setUserRole('patron');
         setUserEntreprise('LSPD');
         setIsAuthenticated(true);
         setLoading(false);
@@ -54,35 +54,19 @@ export const AuthProvider = ({ children }) => {
       }
       
       try {
-        // FORCER LA SUPPRESSION DE TOUTE SESSION EXISTANTE NON-DISCORD
-        await authService.signOut();
-        
-        // Vider le localStorage/sessionStorage
-        if (typeof window !== 'undefined') {
-          localStorage.clear();
-          sessionStorage.clear();
-          console.log('🗑️ localStorage/sessionStorage vidés');
-        }
-
-        // Petite pause pour s'assurer que la déconnexion est effective
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // VÉRIFIER S'IL Y A VRAIMENT UNE SESSION SUPABASE DISCORD
-        const { session, error } = await authService.getSession();
-        
-        console.log('🔍 Session Supabase:', session?.user?.email || 'AUCUNE');
+        // Vérifier s'il y a une session valide avec le nouveau backend
+        const { session, error } = await newAuthService.getSession();
         
         if (error) {
           console.error('Erreur vérification session:', error);
         }
 
         if (session?.user && mounted) {
-          console.log('✅ SESSION DISCORD VALIDE DÉTECTÉE');
+          console.log('✅ SESSION VALIDE DÉTECTÉE - Backend FastAPI');
           await handleUserLogin(session.user);
         } else if (mounted) {
-          console.log('❌ AUCUNE SESSION - REDIRECTION LOGIN DISCORD OBLIGATOIRE');
+          console.log('❌ AUCUNE SESSION - Authentification requise');
           
-          // FORCER L'ÉTAT DE DÉCONNEXION
           setUser(null);
           setSession(null);
           setIsAuthenticated(false);
@@ -93,7 +77,6 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Erreur vérification authentification:', error);
         if (mounted) {
-          // EN CAS D'ERREUR: DÉCONNEXION FORCÉE
           setUser(null);
           setSession(null);
           setIsAuthenticated(false);
@@ -104,14 +87,14 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Écouter les changements d'authentification Supabase
-    const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state change:', event, session?.user?.email || 'AUCUNE SESSION');
+    // Écouter les changements d'authentification du nouveau service
+    const { data: { subscription } } = newAuthService.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state change (FastAPI):', event, session?.user?.discord_username || 'AUCUNE SESSION');
       
       if (!mounted) return;
 
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✅ CONNEXION DISCORD DÉTECTÉE');
+        console.log('✅ CONNEXION DÉTECTÉE - Backend FastAPI');
         await handleUserLogin(session.user);
       } else if (event === 'SIGNED_OUT') {
         console.log('🚪 DÉCONNEXION DÉTECTÉE');
@@ -124,7 +107,7 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    forceLogoutAndCheckAuth();
+    initializeAuth();
 
     return () => {
       mounted = false;
