@@ -2549,19 +2549,11 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* 7) Config (Staff) — Route : /#config */}
-          {['staff'].includes(userRole) && (
-            <TabsContent value="config" className="space-y-6">
-              <SimpleTab 
-                title="Config Staff" 
-                description="Paramètres intégration actuels (lecture/écriture réservée staff)"
-                icon={Settings}
-                specs={[
-                  "Paramètres intégration actuels (lecture/écriture réservée staff)",
-                  "Boutons de test/health si présent"
-                ]}
-              />
-            </TabsContent>
-          )}
+          <TabsContent value="config" className="space-y-6">
+            <RoleGate requiredAccess="canAccessStaffConfig">
+              <ConfigStaffTab />
+            </RoleGate>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
