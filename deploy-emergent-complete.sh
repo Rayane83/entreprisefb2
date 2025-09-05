@@ -246,7 +246,6 @@ scrape_configs:
 EOF
 
     print_success "Configuration monitoring créée"
-}
 
 setup_supervisor_production() {
     print_info "Configuration Supervisor production..."
