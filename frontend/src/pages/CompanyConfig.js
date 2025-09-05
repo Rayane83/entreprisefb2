@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import RoleGate from '../components/RoleGate';
 
 const CompanyConfig = () => {
+  const navigate = useNavigate();
   const { userEntreprise, userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   
