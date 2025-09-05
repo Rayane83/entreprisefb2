@@ -107,15 +107,18 @@ user_problem_statement: "Finaliser l'intégration Supabase pour l'application Po
 backend:
   - task: "Configuration des variables d'environnement Supabase"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/.env"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Ajout des variables REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_ANON_KEY avec les nouveaux identifiants"
+      - working: true
+        agent: "testing"
+        comment: "✅ Variables d'environnement Supabase correctement configurées. URL Supabase validée: https://dutvmjnhnrpqoztftzgd.supabase.co. Clé anonyme présente. Configuration backend MongoDB également validée."
 
   - task: "Création du schéma de base de données Supabase"
     implemented: false
