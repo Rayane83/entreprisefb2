@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { mockUser } from '../data/mockData';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext();
@@ -17,55 +16,79 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState('employe');
-  const [userEntreprise, setUserEntreprise] = useState('');
+  const [userRole, setUserRole] = useState(null);
+  const [userEntreprise, setUserEntreprise] = useState(null);
 
   useEffect(() => {
     let mounted = true;
 
-    // Vérifier la session actuelle
-    const getInitialSession = async () => {
+    const forceLogoutAndCheckAuth = async () => {
+      console.log('🚨 DÉMARRAGE: Vérification session Discord...');
+      
       try {
+        // FORCER LA SUPPRESSION DE TOUTE SESSION EXISTANTE NON-DISCORD
+        await authService.signOut();
+        
+        // Vider le localStorage/sessionStorage
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          console.log('🗑️ localStorage/sessionStorage vidés');
+        }
+
+        // Petite pause pour s'assurer que la déconnexion est effective
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // VÉRIFIER S'IL Y A VRAIMENT UNE SESSION SUPABASE DISCORD
         const { session, error } = await authService.getSession();
         
+        console.log('🔍 Session Supabase:', session?.user?.email || 'AUCUNE');
+        
         if (error) {
-          console.error('Erreur récupération session:', error);
-          setLoading(false);
-          return;
+          console.error('Erreur vérification session:', error);
         }
 
         if (session?.user && mounted) {
+          console.log('✅ SESSION DISCORD VALIDE DÉTECTÉE');
           await handleUserLogin(session.user);
         } else if (mounted) {
-          // Pas de session, utiliser utilisateur mock pour le développement
-          const mockUser = {
-            id: '12345',
-            email: 'patron@lspd.com',
-            discord_username: 'Jean Dupont',
-            entreprise: 'LSPD'
-          };
-          setUser(mockUser);
-          setIsAuthenticated(true);
+          console.log('❌ AUCUNE SESSION - REDIRECTION LOGIN DISCORD OBLIGATOIRE');
+          
+          // FORCER L'ÉTAT DE DÉCONNEXION
+          setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          setUserRole(null);
+          setUserEntreprise(null);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Erreur initialisation session:', error);
+        console.error('Erreur vérification authentification:', error);
         if (mounted) {
+          // EN CAS D'ERREUR: DÉCONNEXION FORCÉE
+          setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          setUserRole(null); 
+          setUserEntreprise(null);
           setLoading(false);
         }
       }
     };
 
-    // Écouter les changements d'authentification
+    // Écouter les changements d'authentification Supabase
     const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.email);
+      console.log('🔄 Auth state change:', event, session?.user?.email || 'AUCUNE SESSION');
       
       if (!mounted) return;
 
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ CONNEXION DISCORD DÉTECTÉE');
         await handleUserLogin(session.user);
       } else if (event === 'SIGNED_OUT') {
+        console.log('🚪 DÉCONNEXION DÉTECTÉE');
         setUser(null);
+        setSession(null);
         setIsAuthenticated(false);
         setUserRole(null);
         setUserEntreprise(null);
@@ -73,77 +96,121 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    getInitialSession();
+    forceLogoutAndCheckAuth();
 
-    // Cleanup
     return () => {
       mounted = false;
       subscription?.unsubscribe();
     };
   }, []);
 
-  // Gérer la connexion utilisateur
+  // Traitement utilisateur Discord RÉEL uniquement
   const handleUserLogin = async (supabaseUser) => {
     setLoading(true);
     
     try {
-      // Récupérer les rôles Discord
+      console.log('🔐 Traitement connexion Discord:', supabaseUser.email);
+      
+      // VÉRIFICATION STRICTE: Doit être Discord
+      if (supabaseUser.app_metadata?.provider !== 'discord') {
+        console.error('❌ Connexion non-Discord détectée, déconnexion forcée');
+        await authService.signOut();
+        throw new Error('Seule la connexion Discord est autorisée');
+      }
+
+      // Récupérer les rôles Discord RÉELS
       const { userRole, entreprise, error } = await authService.getUserGuildRoles();
       
       if (error) {
-        console.error('Erreur récupération rôles:', error);
+        console.error('Erreur récupération rôles Discord:', error);
+        // Ne pas faire throw, utiliser rôle par défaut
       }
 
-      // Créer l'objet utilisateur complet
+      // Données utilisateur RÉELLES Discord
       const userData = {
         id: supabaseUser.id,
         email: supabaseUser.email,
-        discord_username: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'Utilisateur',
-        discord_id: supabaseUser.user_metadata?.provider_id || supabaseUser.user_metadata?.sub,
+        discord_username: supabaseUser.user_metadata?.full_name || 
+                         supabaseUser.user_metadata?.name || 
+                         supabaseUser.user_metadata?.preferred_username || 
+                         'Utilisateur Discord',
+        discord_id: supabaseUser.user_metadata?.provider_id || 
+                   supabaseUser.user_metadata?.sub,
         avatar_url: supabaseUser.user_metadata?.avatar_url,
-        entreprise: entreprise || 'LSPD'
+        entreprise: entreprise || 'Flashback Fa'
       };
 
+      console.log('✅ Utilisateur Discord configuré:', userData.discord_username);
+      console.log('✅ Rôle Discord:', userRole);
+
       setUser(userData);
+      setSession(supabaseUser);
       setUserRole(userRole || 'employe');
-      setUserEntreprise(entreprise || 'LSPD');
+      setUserEntreprise(entreprise || 'Flashback Fa');
       setIsAuthenticated(true);
       
     } catch (error) {
-      console.error('Erreur traitement connexion:', error);
-      // En cas d'erreur, définir des valeurs par défaut
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        discord_username: 'Utilisateur',
-        entreprise: 'LSPD'
-      });
-      setUserRole('employe');
-      setUserEntreprise('LSPD');
-      setIsAuthenticated(true);
+      console.error('❌ Erreur connexion Discord:', error);
+      
+      // EN CAS D'ERREUR: DÉCONNEXION TOTALE
+      await authService.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUserEntreprise(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = () => {
-    localStorage.setItem('mockLoggedIn', 'true');
-    setUser(mockUser);
-    setSession({ user: mockUser });
-    setUserRole(mockUser.role);
-    setUserEntreprise(mockUser.entreprise);
+  // Connexion Discord OBLIGATOIRE
+  const loginWithDiscord = async () => {
+    try {
+      setLoading(true);
+      console.log('🚀 Lancement authentification Discord...');
+      
+      const { error } = await authService.signInWithDiscord();
+      if (error) {
+        console.error('Erreur connexion Discord:', error);
+        setLoading(false);
+        return { error };
+      }
+      
+      console.log('🔄 Redirection Discord en cours...');
+      return { error: null };
+    } catch (error) {
+      console.error('Erreur connexion Discord:', error);
+      setLoading(false);
+      return { error };
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('mockLoggedIn');
-    setUser(null);
-    setSession(null);
-    setUserRole('employe');
-    setUserEntreprise('');
+  // Déconnexion complète
+  const logout = async () => {
+    try {
+      console.log('🚪 Déconnexion...');
+      await authService.signOut();
+      
+      // Vider le stockage local
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUserEntreprise(null);
+    } catch (error) {
+      console.error('Erreur déconnexion:', error);
+    }
   };
 
+  // Fonctions de vérification des rôles
   const canAccessDotation = () => {
-    return ['patron', 'co-patron', 'staff'].includes(userRole);
+    return ['patron', 'co-patron', 'staff', 'dot'].includes(userRole);
   };
 
   const canAccessImpot = () => {
@@ -173,7 +240,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     userRole,
     userEntreprise,
-    login,
+    loginWithDiscord,
     logout,
     canAccessDotation,
     canAccessImpot,
@@ -183,9 +250,5 @@ export const AuthProvider = ({ children }) => {
     isReadOnlyForStaff
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
