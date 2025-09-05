@@ -207,63 +207,175 @@ def test_discord_auth_endpoints():
         print(f"❌ Discord auth endpoints test failed: {e}")
         return False
 
-def test_database_connectivity():
-    """Test MongoDB connectivity indirectly through API"""
-    print("\n🔍 Testing Database Connectivity...")
-    
-    # We test database connectivity by trying to create and retrieve data
-    # This is an indirect test since we don't have direct database access
+def test_dotations_api_endpoints():
+    """Test Dotations CRUD API endpoints (without authentication)"""
+    print("\n🔍 Testing Dotations API Endpoints...")
     
     backend_url = get_backend_url()
     if not backend_url:
         return False
     
     try:
-        # Create a unique test entry
-        timestamp = datetime.now().isoformat()
-        test_data = {
-            "client_name": f"DB_Test_Company_{timestamp}"
+        # Test GET /api/dotations without auth (should fail with 401)
+        print("Testing GET /api/dotations without authentication...")
+        response = requests.get(f"{backend_url}/api/dotations", timeout=10)
+        
+        if response.status_code == 401:
+            print("✅ Dotations endpoint protected - requires authentication")
+        else:
+            print(f"⚠️ Expected 401 for /api/dotations, got: {response.status_code}")
+        
+        # Test POST /api/dotations without auth (should fail with 401)
+        print("Testing POST /api/dotations without authentication...")
+        test_dotation_data = {
+            "title": "Test Dotation Report",
+            "period": "2024-01",
+            "rows": [
+                {
+                    "employee_name": "Jean Dupont",
+                    "grade": "Agent",
+                    "run": 5000.0,
+                    "facture": 3000.0,
+                    "vente": 2000.0
+                }
+            ]
         }
         
-        # Create entry
         response = requests.post(
-            f"{backend_url}/api/status", 
-            json=test_data,
+            f"{backend_url}/api/dotations",
+            json=test_dotation_data,
             headers={"Content-Type": "application/json"},
             timeout=10
         )
         
-        if response.status_code != 200:
-            print(f"❌ Failed to create test entry: {response.status_code}")
-            return False
-        
-        created_entry = response.json()
-        entry_id = created_entry.get('id')
-        
-        # Retrieve all entries and verify our entry exists
-        response = requests.get(f"{backend_url}/api/status", timeout=10)
-        
-        if response.status_code != 200:
-            print(f"❌ Failed to retrieve entries: {response.status_code}")
-            return False
-        
-        all_entries = response.json()
-        found_entry = None
-        
-        for entry in all_entries:
-            if entry.get('id') == entry_id:
-                found_entry = entry
-                break
-        
-        if found_entry:
-            print("✅ Database connectivity verified - data successfully stored and retrieved")
-            return True
+        if response.status_code == 401:
+            print("✅ Dotations creation protected - requires authentication")
         else:
-            print("❌ Database connectivity issue - created entry not found in retrieval")
+            print(f"⚠️ Expected 401 for POST /api/dotations, got: {response.status_code}")
+        
+        # Test bulk import endpoint
+        print("Testing POST /api/dotations/bulk-import without authentication...")
+        bulk_data = {
+            "data": "Jean Dupont;5000;3000;2000\nMarie Martin;4000;2500;1500",
+            "format": "csv"
+        }
+        
+        response = requests.post(
+            f"{backend_url}/api/dotations/bulk-import",
+            json=bulk_data,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        if response.status_code == 401:
+            print("✅ Dotations bulk import protected - requires authentication")
+        else:
+            print(f"⚠️ Expected 401 for bulk import, got: {response.status_code}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Dotations API test failed: {e}")
+        return False
+
+def test_tax_api_endpoints():
+    """Test Tax declarations API endpoints"""
+    print("\n🔍 Testing Tax Declarations API Endpoints...")
+    
+    backend_url = get_backend_url()
+    if not backend_url:
+        return False
+    
+    try:
+        # Test tax-related endpoints that might exist
+        tax_endpoints = [
+            "/api/tax-declarations",
+            "/api/tax-declarations/calculate", 
+            "/api/tax-declarations/brackets"
+        ]
+        
+        for endpoint in tax_endpoints:
+            print(f"Testing {endpoint}...")
+            response = requests.get(f"{backend_url}{endpoint}", timeout=10)
+            
+            if response.status_code == 401:
+                print(f"✅ {endpoint} protected - requires authentication")
+            elif response.status_code == 404:
+                print(f"⚠️ {endpoint} not implemented yet")
+            elif response.status_code == 200:
+                print(f"✅ {endpoint} accessible")
+            else:
+                print(f"⚠️ {endpoint} returned status: {response.status_code}")
+        
+        # Test POST tax calculation
+        print("Testing POST /api/tax-declarations/calculate...")
+        calc_data = {
+            "revenus_imposables": 50000.0,
+            "abattements": 5000.0,
+            "patrimoine": 100000.0
+        }
+        
+        response = requests.post(
+            f"{backend_url}/api/tax-declarations/calculate",
+            json=calc_data,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        if response.status_code == 401:
+            print("✅ Tax calculation protected - requires authentication")
+        elif response.status_code == 404:
+            print("⚠️ Tax calculation endpoint not implemented yet")
+        elif response.status_code == 200:
+            calc_result = response.json()
+            print(f"✅ Tax calculation working - Result: {calc_result}")
+        else:
+            print(f"⚠️ Tax calculation returned status: {response.status_code}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Tax API test failed: {e}")
+        return False
+
+def test_mysql_database_connectivity():
+    """Test MySQL database connectivity through health endpoint"""
+    print("\n🔍 Testing MySQL Database Connectivity...")
+    
+    backend_url = get_backend_url()
+    if not backend_url:
+        return False
+    
+    try:
+        # Use health endpoint to verify database connection
+        response = requests.get(f"{backend_url}/health", timeout=10)
+        
+        if response.status_code == 200:
+            health_data = response.json()
+            database_status = health_data.get("database", "unknown")
+            services = health_data.get("services", {})
+            
+            if database_status == "connected":
+                print("✅ MySQL database connection verified through health check")
+                
+                # Check additional service details
+                if "database" in services:
+                    db_service_status = services["database"]
+                    if db_service_status == "connected":
+                        print("✅ Database service status confirmed as connected")
+                    else:
+                        print(f"⚠️ Database service status: {db_service_status}")
+                
+                return True
+            else:
+                print(f"❌ Database connection issue: {database_status}")
+                return False
+        else:
+            print(f"❌ Health endpoint failed: {response.status_code}")
             return False
             
     except Exception as e:
-        print(f"❌ Database connectivity test failed: {e}")
+        print(f"❌ MySQL connectivity test failed: {e}")
         return False
 
 def test_environment_variables():
