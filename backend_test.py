@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend Testing Suite for Portail Entreprise Flashback Fa
-Tests FastAPI backend, MongoDB connectivity, and API endpoints
+Tests FastAPI + MySQL backend, database connectivity, and API endpoints
 """
 
 import requests
@@ -10,6 +10,7 @@ import os
 import sys
 from datetime import datetime
 import time
+import uuid
 
 # Get backend URL from frontend .env file
 def get_backend_url():
