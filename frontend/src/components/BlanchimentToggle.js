@@ -36,6 +36,8 @@ const BlanchimentToggle = () => {
     somme: ''
   });
   const [loading, setLoading] = useState(false);
+  const [pasteData, setPasteData] = useState('');
+  const [showPasteArea, setShowPasteArea] = useState(false);
 
   const readonly = isReadOnlyForStaff();
   const canManageBlanchiment = canAccessStaffConfig(); // Seul le staff peut activer/désactiver
