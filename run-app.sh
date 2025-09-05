@@ -183,9 +183,9 @@ main() {
                     echo ""
                     print_info "Mode développement activé"
                     # S'assurer que le mode mock est bien activé
-                    if [[ -f "/app/frontend/.env" ]]; then
-                        sed -i 's/REACT_APP_USE_MOCK_AUTH=false/REACT_APP_USE_MOCK_AUTH=true/' /app/frontend/.env
-                        sed -i 's/REACT_APP_FORCE_DISCORD_AUTH=true/REACT_APP_FORCE_DISCORD_AUTH=false/' /app/frontend/.env
+                    if [[ -f "$FRONTEND_DIR/.env" ]]; then
+                        sed -i 's/REACT_APP_USE_MOCK_AUTH=false/REACT_APP_USE_MOCK_AUTH=true/' "$FRONTEND_DIR/.env"
+                        sed -i 's/REACT_APP_FORCE_DISCORD_AUTH=true/REACT_APP_FORCE_DISCORD_AUTH=false/' "$FRONTEND_DIR/.env"
                     fi
                     break
                     ;;
