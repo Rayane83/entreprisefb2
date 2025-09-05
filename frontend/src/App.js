@@ -56,7 +56,7 @@ function App() {
                 path="/" 
                 element={
                   <ProtectedRoute>
-                    <Index />
+                    <Dashboard />
                   </ProtectedRoute>
                 } 
               />
