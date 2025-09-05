@@ -225,10 +225,13 @@ test_plan:
     - "Configuration des variables d'environnement Supabase"
     - "Configuration client Supabase"
     - "Service d'authentification Discord"
+    - "Export Excel pour Impôts, Blanchiment, Archives"
+    - "Zone copier-coller pour Blanchiment"
+    - "Composant Textarea manquant"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Configuration initiale Supabase terminée avec les nouveaux identifiants. Prêt pour les tests de connexion et l'implémentation du schéma de base de données."
+    message: "Phase 1 complétée: Configuration Supabase avec nouveaux identifiants, création du schéma SQL et politiques RLS, implémentation des exports Excel et zones copier-coller. Tous les composants frontend mis à jour. Prêt pour les tests complets."
