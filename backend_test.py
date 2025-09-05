@@ -62,7 +62,7 @@ def test_cors_configuration():
     try:
         # Make a preflight request
         headers = {
-            'Origin': 'https://enterprise-hub-51.preview.emergentagent.com',
+            'Origin': 'https://enterprise-portal-2.preview.emergentagent.com',
             'Access-Control-Request-Method': 'POST',
             'Access-Control-Request-Headers': 'Content-Type'
         }
