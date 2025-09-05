@@ -379,12 +379,12 @@ def test_mysql_database_connectivity():
         return False
 
 def test_environment_variables():
-    """Test that required environment variables are configured"""
+    """Test that required environment variables are configured for FastAPI + MySQL"""
     print("\n🔍 Testing Environment Variables Configuration...")
     
-    # Check backend .env file
+    # Check backend .env file for MySQL configuration
     backend_env_path = '/app/backend/.env'
-    required_backend_vars = ['MONGO_URL', 'DB_NAME']
+    required_backend_vars = ['DATABASE_URL', 'JWT_SECRET_KEY', 'API_HOST', 'API_PORT']
     
     try:
         with open(backend_env_path, 'r') as f:
@@ -399,15 +399,41 @@ def test_environment_variables():
             print(f"❌ Missing backend environment variables: {missing_vars}")
             return False
         else:
-            print("✅ Backend environment variables configured")
+            print("✅ Backend MySQL environment variables configured")
+            
+        # Check for MySQL connection string
+        if "mysql+pymysql://" in backend_env_content:
+            print("✅ MySQL connection string detected")
+        else:
+            print("⚠️ MySQL connection string not found")
+            
+        # Check Discord OAuth configuration (optional)
+        discord_vars = ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET']
+        discord_configured = all(f"{var}=" in backend_env_content for var in discord_vars)
+        
+        if discord_configured:
+            # Check if they have actual values (not empty)
+            discord_has_values = False
+            for line in backend_env_content.split('\n'):
+                for var in discord_vars:
+                    if line.startswith(f"{var}=") and len(line.split('=', 1)[1].strip()) > 0:
+                        discord_has_values = True
+                        break
+            
+            if discord_has_values:
+                print("✅ Discord OAuth credentials configured")
+            else:
+                print("⚠️ Discord OAuth variables present but empty (use configure-discord-tokens.sh)")
+        else:
+            print("⚠️ Discord OAuth not configured (optional)")
     
     except Exception as e:
         print(f"❌ Failed to check backend .env: {e}")
         return False
     
-    # Check frontend .env file for Supabase configuration
+    # Check frontend .env file
     frontend_env_path = '/app/frontend/.env'
-    required_frontend_vars = ['REACT_APP_BACKEND_URL', 'REACT_APP_SUPABASE_URL', 'REACT_APP_SUPABASE_ANON_KEY']
+    required_frontend_vars = ['REACT_APP_BACKEND_URL']
     
     try:
         with open(frontend_env_path, 'r') as f:
@@ -422,13 +448,14 @@ def test_environment_variables():
             print(f"❌ Missing frontend environment variables: {missing_vars}")
             return False
         else:
-            print("✅ Frontend Supabase environment variables configured")
+            print("✅ Frontend environment variables configured")
             
-        # Verify Supabase URL format
-        if "https://dutvmjnhnrpqoztftzgd.supabase.co" in frontend_env_content:
-            print("✅ Supabase URL correctly configured")
+        # Verify backend URL format
+        backend_url = get_backend_url()
+        if backend_url and ("https://" in backend_url or "http://" in backend_url):
+            print(f"✅ Backend URL correctly configured: {backend_url}")
         else:
-            print("⚠️ Supabase URL might not be correctly configured")
+            print(f"⚠️ Backend URL might be incorrect: {backend_url}")
             
         return True
     
