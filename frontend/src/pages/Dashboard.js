@@ -1749,6 +1749,721 @@ const SimpleTab = ({ title, description, icon: Icon, specs }) => (
   </div>
 );
 
+// Composant Archives complet avec recherche et CRUD
+const ArchivesTab = () => {
+  const { userRole, userEntreprise, canAccessStaffConfig } = useAuth();
+  const isStaff = canAccessStaffConfig();
+  const isPatronCoPatron = ['patron', 'co-patron'].includes(userRole);
+  
+  const [archives, setArchives] = useState([
+    {
+      id: '1',
+      type: 'Dotation',
+      date: '2024-01-25',
+      montant: 125000,
+      statut: 'En attente',
+      entreprise_key: 'LSPD',
+      created_at: '2024-01-25T10:00:00Z',
+      payload: {
+        employees: [
+          { name: 'Pierre Martin', ca_total: 35000, salaire: 8500, prime: 2000 },
+          { name: 'Marie Dubois', ca_total: 45000, salaire: 12000, prime: 3500 }
+        ],
+        totals: { ca: 80000, salaires: 20500, primes: 5500 },
+        solde_actuel: 150000,
+        description: 'Dotation mensuelle janvier 2024'
+      }
+    },
+    {
+      id: '2',
+      type: 'Impôt',
+      date: '2024-01-20',
+      montant: 25000,
+      statut: 'Validé',
+      entreprise_key: 'LSPD',
+      created_at: '2024-01-20T14:30:00Z',
+      payload: {
+        revenus_imposables: 200000,
+        patrimoine: 150000,
+        impot_revenus: 20000,
+        impot_patrimoine: 5000,
+        description: 'Déclaration impôts Q4 2023'
+      }
+    },
+    {
+      id: '3',
+      type: 'Blanchiment',
+      date: '2024-01-18',
+      montant: 50000,
+      statut: 'Refusé',
+      entreprise_key: 'EMS',
+      created_at: '2024-01-18T09:15:00Z',
+      payload: {
+        operations: 3,
+        somme_totale: 175000,
+        entreprise_perc: 15,
+        groupe_perc: 5,
+        description: 'Cycle blanchiment semaine 3 - Non conforme'
+      }
+    }
+  ]);
+  
+  const [filteredArchives, setFilteredArchives] = useState(archives);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    type: '',
+    statut: '',
+    entreprise: '',
+    dateDebut: '',
+    dateFin: ''
+  });
+  const [selectedArchive, setSelectedArchive] = useState(null);
+  const [editingArchive, setEditingArchive] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Recherche avec debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      let filtered = archives;
+      
+      // Recherche globale
+      if (searchTerm.trim()) {
+        filtered = filtered.filter(archive => {
+          const searchStr = JSON.stringify(archive).toLowerCase();
+          return searchStr.includes(searchTerm.toLowerCase());
+        });
+      }
+      
+      // Filtres spécifiques
+      if (filters.type) {
+        filtered = filtered.filter(archive => archive.type === filters.type);
+      }
+      if (filters.statut) {
+        filtered = filtered.filter(archive => archive.statut === filters.statut);
+      }
+      if (filters.entreprise) {
+        filtered = filtered.filter(archive => archive.entreprise_key === filters.entreprise);
+      }
+      if (filters.dateDebut) {
+        filtered = filtered.filter(archive => archive.date >= filters.dateDebut);
+      }
+      if (filters.dateFin) {
+        filtered = filtered.filter(archive => archive.date <= filters.dateFin);
+      }
+      
+      // Tri par date de création desc
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      setFilteredArchives(filtered);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm, filters, archives]);
+  
+  // Vérification des droits d'édition
+  const canEdit = (archive) => {
+    if (isStaff) return true;
+    if (isPatronCoPatron && archive.statut.toLowerCase().includes('refus')) return true;
+    return false;
+  };
+  
+  const handleView = (archive) => {
+    setSelectedArchive(archive);
+  };
+  
+  const handleEdit = (archive) => {
+    if (!canEdit(archive)) {
+      toast.error('Vous n\'avez pas les permissions pour éditer cette archive');
+      return;
+    }
+    setEditingArchive({ ...archive });
+  };
+  
+  const handleSaveEdit = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setArchives(prev => prev.map(archive => 
+        archive.id === editingArchive.id ? editingArchive : archive
+      ));
+      
+      setEditingArchive(null);
+      toast.success('Archive modifiée avec succès');
+    } catch (error) {
+      toast.error('Erreur lors de la modification');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleValidate = async (id) => {
+    if (!isStaff) {
+      toast.error('Seul le staff peut valider les archives');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setArchives(prev => prev.map(archive => 
+        archive.id === id ? { ...archive, statut: 'Validé' } : archive
+      ));
+      
+      toast.success('Archive validée');
+    } catch (error) {
+      toast.error('Erreur lors de la validation');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleReject = async (id) => {
+    if (!isStaff) {
+      toast.error('Seul le staff peut refuser les archives');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setArchives(prev => prev.map(archive => 
+        archive.id === id ? { ...archive, statut: 'Refusé' } : archive
+      ));
+      
+      toast.success('Archive refusée');
+    } catch (error) {
+      toast.error('Erreur lors du refus');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleDelete = async (id) => {
+    if (!isStaff) {
+      toast.error('Seul le staff peut supprimer les archives');
+      return;
+    }
+    
+    const archive = archives.find(a => a.id === id);
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'archive "${archive?.type} - ${archive?.date}" ?`)) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setArchives(prev => prev.filter(archive => archive.id !== id));
+      toast.success('Archive supprimée');
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleExportExcel = () => {
+    try {
+      const exportData = filteredArchives.map(archive => ({
+        'ID': archive.id,
+        'Type': archive.type,
+        'Date': new Date(archive.date).toLocaleDateString('fr-FR'), 
+        'Montant (€)': archive.montant,
+        'Statut': archive.statut,
+        'Entreprise': archive.entreprise_key,
+        'Créé le': new Date(archive.created_at).toLocaleDateString('fr-FR'),
+        'Description': archive.payload?.description || '',
+        'Détails': JSON.stringify(archive.payload, null, 2)
+      }));
+      
+      // Utilisation d'XLSX directement pour plus de contrôle
+      const XLSX = require('xlsx');
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Archives');
+      
+      const fileName = userEntreprise 
+        ? `archives_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`
+        : `archives_toutes_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      XLSX.writeFile(workbook, fileName);
+      toast.success(`Export Excel réussi : ${fileName}`);
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+  
+  const handleTemplateImport = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!isStaff) {
+      toast.error('Seul le staff peut importer des templates');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const XLSX = require('xlsx');
+        const workbook = XLSX.read(e.target.result, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Récupération des données
+        const data = XLSX.utils.sheet_to_json(sheet);
+        
+        if (data.length > 0) {
+          // Exemple de mapping basé sur la première ligne
+          const headers = Object.keys(data[0]);
+          console.log('Headers détectés:', headers);
+          
+          toast.success(`Template importé avec succès. ${data.length} ligne(s) détectée(s).`);
+          
+          // Ici on pourrait traiter et ajouter les données aux archives
+          // Pour l'instant, on affiche juste un succès
+        } else {
+          toast.error('Fichier vide ou format non reconnu');
+        }
+      } catch (error) {
+        console.error('Erreur import:', error);
+        toast.error('Erreur lors de l\'import du template');
+      }
+    };
+    reader.readAsBinaryString(file);
+    event.target.value = ''; // Reset input
+  };
+  
+  const getStatutColor = (statut) => {
+    switch (statut.toLowerCase()) {
+      case 'en attente': return 'bg-yellow-100 text-yellow-800';
+      case 'validé': return 'bg-green-100 text-green-800';
+      case 'refusé': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Dotation': return 'bg-blue-100 text-blue-800';
+      case 'Impôt': return 'bg-purple-100 text-purple-800';
+      case 'Blanchiment': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  // Statistiques
+  const stats = {
+    total: filteredArchives.length,
+    enAttente: filteredArchives.filter(a => a.statut === 'En attente').length,
+    valide: filteredArchives.filter(a => a.statut === 'Validé').length,
+    refuse: filteredArchives.filter(a => a.statut === 'Refusé').length,
+    montantTotal: filteredArchives.reduce((sum, a) => sum + a.montant, 0)
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Gestion des Archives</h2>
+          <p className="text-muted-foreground">
+            Consultez et gérez les archives des dotations, impôts et blanchiment
+            {userEntreprise && ` - Entreprise: ${userEntreprise}`}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          {isStaff && (
+            <>
+              <Label htmlFor="template-upload" className="cursor-pointer">
+                <Button variant="outline" size="sm" asChild>
+                  <span>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Template
+                  </span>
+                </Button>
+              </Label>
+              <Input
+                id="template-upload"
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleTemplateImport}
+              />
+            </>
+          )}
+          <Button onClick={handleExportExcel} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
+        </div>
+      </div>
+
+      {/* Statistiques */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-yellow-600">{stats.enAttente}</div>
+            <div className="text-sm text-muted-foreground">En attente</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-green-600">{stats.valide}</div>
+            <div className="text-sm text-muted-foreground">Validé</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-red-600">{stats.refuse}</div>
+            <div className="text-sm text-muted-foreground">Refusé</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold">€{stats.montantTotal.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Montant total</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recherche et filtres avancés */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recherche Avancée</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Recherche globale */}
+          <div>
+            <Label htmlFor="search">Recherche globale</Label>
+            <div className="relative">
+              <Eye className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="search"
+                placeholder="Rechercher dans toutes les archives..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          
+          {/* Filtres spécifiques */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <Label>Type</Label>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Tous les types</option>
+                <option value="Dotation">Dotation</option>
+                <option value="Impôt">Impôt</option>
+                <option value="Blanchiment">Blanchiment</option>
+              </select>
+            </div>
+            <div>
+              <Label>Statut</Label>
+              <select
+                value={filters.statut}
+                onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Tous les statuts</option>
+                <option value="En attente">En attente</option>
+                <option value="Validé">Validé</option>
+                <option value="Refusé">Refusé</option>
+              </select>
+            </div>
+            <div>
+              <Label>Entreprise</Label>
+              <select
+                value={filters.entreprise}
+                onChange={(e) => setFilters(prev => ({ ...prev, entreprise: e.target.value }))}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Toutes les entreprises</option>
+                <option value="LSPD">LSPD</option>
+                <option value="EMS">EMS</option>
+                <option value="FBI">FBI</option>
+              </select>
+            </div>
+            <div>
+              <Label>Date début</Label>
+              <Input
+                type="date"
+                value={filters.dateDebut}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateDebut: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Date fin</Label>
+              <Input
+                type="date"
+                value={filters.dateFin}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateFin: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          {/* Bouton reset filtres */}
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setSearchTerm('');
+                setFilters({
+                  type: '',
+                  statut: '',
+                  entreprise: '',
+                  dateDebut: '',
+                  dateFin: ''
+                });
+              }}
+            >
+              Réinitialiser les filtres
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table des archives */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Archives ({filteredArchives.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredArchives.length === 0 ? (
+            <div className="text-center py-8">
+              <Archive className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">
+                {searchTerm || Object.values(filters).some(f => f) ? 'Aucune archive trouvée' : 'Aucune archive disponible'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3">Type</th>
+                    <th className="text-left p-3">Date</th>
+                    <th className="text-left p-3">Montant</th>
+                    <th className="text-left p-3">Statut</th>
+                    <th className="text-left p-3">Entreprise</th>
+                    <th className="text-left p-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredArchives.map((archive) => (
+                    <tr key={archive.id} className="border-b hover:bg-muted/50">
+                      <td className="p-3">
+                        <Badge className={getTypeColor(archive.type)}>
+                          {archive.type}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        {new Date(archive.date).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="p-3 font-medium">
+                        €{archive.montant.toLocaleString()}
+                      </td>
+                      <td className="p-3">
+                        <Badge className={getStatutColor(archive.statut)}>
+                          {archive.statut}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="secondary">{archive.entreprise_key}</Badge>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleView(archive)}
+                            title="Voir les détails"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          
+                          {canEdit(archive) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(archive)}
+                              title="Éditer"
+                            >
+                              <Settings className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
+                          {isStaff && archive.statut !== 'Validé' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleValidate(archive.id)}
+                              className="text-green-600 hover:text-green-700"
+                              title="Valider"
+                              disabled={loading}
+                            >
+                              ✓
+                            </Button>
+                          )}
+                          
+                          {isStaff && archive.statut !== 'Refusé' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReject(archive.id)}
+                              className="text-red-600 hover:text-red-700"
+                              title="Refuser"
+                              disabled={loading}
+                            >
+                              ✗
+                            </Button>
+                          )}
+                          
+                          {isStaff && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(archive.id)}
+                              className="text-red-600 hover:text-red-700"
+                              title="Supprimer"
+                              disabled={loading}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modal visualisation */}
+      {selectedArchive && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedArchive(null)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">Détails de l'Archive</h3>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedArchive(null)}>
+                ✗
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Type</Label>
+                  <p>{selectedArchive.type}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Date</Label>
+                  <p>{new Date(selectedArchive.date).toLocaleDateString('fr-FR')}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Montant</Label>
+                  <p>€{selectedArchive.montant.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Statut</Label>
+                  <Badge className={getStatutColor(selectedArchive.statut)}>
+                    {selectedArchive.statut}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Description</Label>
+                <p>{selectedArchive.payload?.description || 'Aucune description'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Détails (Payload)</Label>
+                <pre className="mt-2 p-4 bg-muted rounded-lg text-sm overflow-auto max-h-60 whitespace-pre-wrap">
+                  {JSON.stringify(selectedArchive.payload, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition */}
+      {editingArchive && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setEditingArchive(null)}>
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">Modifier l'Archive</h3>
+              <Button variant="ghost" size="sm" onClick={() => setEditingArchive(null)}>
+                ✗
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_date">Date</Label>
+                  <Input
+                    id="edit_date"
+                    type="date"
+                    value={editingArchive.date}
+                    onChange={(e) => setEditingArchive(prev => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_montant">Montant (€)</Label>
+                  <Input
+                    id="edit_montant"
+                    type="number"
+                    value={editingArchive.montant}
+                    onChange={(e) => setEditingArchive(prev => ({ ...prev, montant: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit_description">Description</Label>
+                <Textarea
+                  id="edit_description"
+                  value={editingArchive.payload?.description || ''}
+                  onChange={(e) => setEditingArchive(prev => ({ 
+                    ...prev, 
+                    payload: { ...prev.payload, description: e.target.value }
+                  }))}
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditingArchive(null)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={loading}>
+                  {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const { userRole } = useAuth();
   const location = useLocation();
