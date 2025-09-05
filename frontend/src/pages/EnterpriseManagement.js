@@ -31,13 +31,15 @@ const EnterpriseManagement = () => {
       id: 1,
       nom: 'LSPD',
       discord_guild_id: '1404608015230832742',
-      main_role_id: '1404608015230832745'
+      main_role_id: '1404608015230832745',
+      member_role_id: '1404608015230832748'
     },
     {
       id: 2,
       nom: 'EMS',
       discord_guild_id: '1404608015230832742',
-      main_role_id: '1404608015230832746'
+      main_role_id: '1404608015230832746',
+      member_role_id: '1404608015230832749'
     }
   ]);
 
@@ -45,7 +47,8 @@ const EnterpriseManagement = () => {
   const [newEnterprise, setNewEnterprise] = useState({
     nom: '',
     discord_guild_id: '',
-    main_role_id: ''
+    main_role_id: '',
+    member_role_id: ''
   });
 
   // État pour configuration des rôles Dot Guild
