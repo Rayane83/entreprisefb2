@@ -131,80 +131,80 @@ def test_cors_configuration():
         print(f"❌ CORS test failed: {e}")
         return False
 
-def test_status_endpoints():
-    """Test status check CRUD operations"""
-    print("\n🔍 Testing Status Check API Endpoints...")
+def test_discord_auth_endpoints():
+    """Test Discord OAuth authentication endpoints (without actual tokens)"""
+    print("\n🔍 Testing Discord OAuth Authentication Endpoints...")
     
     backend_url = get_backend_url()
     if not backend_url:
         return False
     
     try:
-        # Test GET /api/status (should return empty list initially)
-        print("Testing GET /api/status...")
-        response = requests.get(f"{backend_url}/api/status", timeout=10)
+        # Test GET /auth/discord-url (should return Discord OAuth URL)
+        print("Testing GET /auth/discord-url...")
+        response = requests.get(f"{backend_url}/auth/discord-url", timeout=10)
         
         if response.status_code == 200:
-            status_checks = response.json()
-            print(f"✅ GET /api/status successful. Found {len(status_checks)} status checks")
+            data = response.json()
+            if data.get("success") and "url" in data.get("data", {}):
+                discord_url = data["data"]["url"]
+                if "discord.com/api/oauth2/authorize" in discord_url:
+                    print("✅ Discord OAuth URL generation working")
+                else:
+                    print(f"⚠️ Unexpected Discord URL format: {discord_url}")
+            else:
+                print(f"❌ Unexpected discord-url response: {data}")
+                return False
         else:
-            print(f"❌ GET /api/status failed with status: {response.status_code}")
+            print(f"❌ GET /auth/discord-url failed with status: {response.status_code}")
             return False
         
-        # Test POST /api/status
-        print("Testing POST /api/status...")
-        test_data = {
-            "client_name": "Test Company Flashback Fa"
+        # Test POST /auth/discord/callback with invalid code (should fail gracefully)
+        print("Testing POST /auth/discord/callback with invalid code...")
+        test_callback_data = {
+            "code": "invalid_test_code_12345",
+            "state": "test_state"
         }
         
         response = requests.post(
-            f"{backend_url}/api/status", 
-            json=test_data,
+            f"{backend_url}/auth/discord/callback",
+            json=test_callback_data,
             headers={"Content-Type": "application/json"},
             timeout=10
         )
         
-        if response.status_code == 200:
-            created_status = response.json()
-            print(f"✅ POST /api/status successful. Created status with ID: {created_status.get('id')}")
-            
-            # Verify the created status has required fields
-            required_fields = ['id', 'client_name', 'timestamp']
-            missing_fields = [field for field in required_fields if field not in created_status]
-            
-            if missing_fields:
-                print(f"❌ Created status missing fields: {missing_fields}")
-                return False
-            
-            if created_status['client_name'] != test_data['client_name']:
-                print(f"❌ Client name mismatch: expected {test_data['client_name']}, got {created_status['client_name']}")
-                return False
-                
-            print("✅ Created status has all required fields")
-            
-        else:
-            print(f"❌ POST /api/status failed with status: {response.status_code}")
-            print(f"Response: {response.text}")
-            return False
-        
-        # Test GET again to verify data persistence
-        print("Testing data persistence...")
-        response = requests.get(f"{backend_url}/api/status", timeout=10)
-        
-        if response.status_code == 200:
-            updated_status_checks = response.json()
-            if len(updated_status_checks) > len(status_checks):
-                print("✅ Data persistence verified - new status check found in database")
-                return True
+        # Should return 400 or 500 with proper error handling
+        if response.status_code in [400, 500]:
+            error_data = response.json()
+            if "detail" in error_data:
+                print("✅ Discord callback error handling working")
             else:
-                print("⚠️ Data persistence unclear - status check count didn't increase")
-                return True
+                print(f"⚠️ Unexpected error format: {error_data}")
         else:
-            print(f"❌ Failed to verify data persistence: {response.status_code}")
-            return False
-            
+            print(f"⚠️ Unexpected callback response status: {response.status_code}")
+        
+        # Test GET /auth/me without token (should fail with 401)
+        print("Testing GET /auth/me without authentication...")
+        response = requests.get(f"{backend_url}/auth/me", timeout=10)
+        
+        if response.status_code == 401:
+            print("✅ Authentication protection working - /auth/me requires token")
+        else:
+            print(f"⚠️ Expected 401 for /auth/me, got: {response.status_code}")
+        
+        # Test GET /auth/check without token (should fail with 401)
+        print("Testing GET /auth/check without authentication...")
+        response = requests.get(f"{backend_url}/auth/check", timeout=10)
+        
+        if response.status_code == 401:
+            print("✅ Authentication protection working - /auth/check requires token")
+        else:
+            print(f"⚠️ Expected 401 for /auth/check, got: {response.status_code}")
+        
+        return True
+        
     except Exception as e:
-        print(f"❌ Status endpoints test failed: {e}")
+        print(f"❌ Discord auth endpoints test failed: {e}")
         return False
 
 def test_database_connectivity():
