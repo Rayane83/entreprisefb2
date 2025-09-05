@@ -167,40 +167,52 @@ frontend:
         comment: "Service déjà créé avec simulation des rôles, à tester avec Discord OAuth"
 
   - task: "Export Excel pour Impôts, Blanchiment, Archives"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/utils/excelExport.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "À implémenter - fonctionnalité d'export en format Excel"
+        comment: "Fonctionnalité d'export Excel implémentée pour tous les composants avec formats appropriés"
 
   - task: "Zone copier-coller pour Blanchiment"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/components/BlanchimentToggle.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "À implémenter - zone de saisie par copier-coller"
+        comment: "Zone de copier-coller ajoutée avec parsing intelligent des données Excel/CSV"
 
   - task: "Bouton retour pour pages de configuration"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/pages/CompanyConfig.js"
     stuck_count: 0
     priority: "low"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "À implémenter - bouton de navigation retour"
+        comment: "Bouton retour ajouté avec navigation correcte vers la page principale"
+
+  - task: "Composant Textarea manquant"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/ui/textarea.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Composant Textarea créé et intégré dans le système UI"
 
 metadata:
   created_by: "main_agent"
