@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
 import LoginScreen from './components/LoginScreen';
-import Index from './pages/Index';
+import Dashboard from './pages/Dashboard';
 import CompanyConfig from './pages/CompanyConfig';
 import Superadmin from './pages/Superadmin';
 import EnterpriseManagement from './pages/EnterpriseManagement';
