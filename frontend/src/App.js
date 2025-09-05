@@ -101,6 +101,9 @@ function App() {
                 } 
               />
               
+              {/* Auth callback */}
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              
               {/* Pages d'erreur */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
