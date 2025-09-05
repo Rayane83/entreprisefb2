@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 🚀 Script de démarrage pour Portail Entreprise Flashback Fa v2.0.0
-# Vérifie la configuration et démarre l'application
+# Vérifie la configuration Discord et démarre l'application
 
 set -e
 
