@@ -11,6 +11,7 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import RoleGate from '../components/RoleGate';
+import ConfigStaffTab from '../components/StaffConfig';
 import { toast } from 'sonner';
 import { 
   Users,
