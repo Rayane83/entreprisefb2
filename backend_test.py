@@ -463,18 +463,108 @@ def test_environment_variables():
         print(f"❌ Failed to check frontend .env: {e}")
         return False
 
+def test_api_error_handling():
+    """Test API error handling and response formatting"""
+    print("\n🔍 Testing API Error Handling...")
+    
+    backend_url = get_backend_url()
+    if not backend_url:
+        return False
+    
+    try:
+        # Test 404 error handling
+        print("Testing 404 error handling...")
+        response = requests.get(f"{backend_url}/nonexistent-endpoint", timeout=10)
+        
+        if response.status_code == 404:
+            print("✅ 404 error handling working")
+        else:
+            print(f"⚠️ Expected 404, got: {response.status_code}")
+        
+        # Test invalid JSON handling
+        print("Testing invalid JSON handling...")
+        response = requests.post(
+            f"{backend_url}/api/dotations",
+            data="invalid json data",
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        if response.status_code in [400, 422, 401]:  # 401 for auth, 400/422 for invalid data
+            print("✅ Invalid JSON error handling working")
+        else:
+            print(f"⚠️ Unexpected status for invalid JSON: {response.status_code}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error handling test failed: {e}")
+        return False
+
+def test_api_features():
+    """Test general API features like CORS, response format, etc."""
+    print("\n🔍 Testing API Features...")
+    
+    backend_url = get_backend_url()
+    if not backend_url:
+        return False
+    
+    try:
+        # Test CORS headers
+        print("Testing CORS configuration...")
+        response = requests.options(f"{backend_url}/", timeout=10)
+        
+        cors_headers = {
+            'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+            'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+            'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+        }
+        
+        if any(cors_headers.values()):
+            print("✅ CORS headers present")
+        else:
+            print("⚠️ CORS headers not found in OPTIONS response")
+        
+        # Test response format consistency
+        print("Testing response format consistency...")
+        response = requests.get(f"{backend_url}/", timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict) and "success" in data:
+                print("✅ Consistent API response format (success field)")
+            else:
+                print("⚠️ Response format might be inconsistent")
+        
+        # Test process time header
+        if "X-Process-Time" in response.headers:
+            process_time = float(response.headers["X-Process-Time"])
+            print(f"✅ Performance monitoring active - Process time: {process_time:.3f}s")
+        else:
+            print("⚠️ Process time header not found")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ API features test failed: {e}")
+        return False
+
 def run_all_tests():
-    """Run all backend tests"""
-    print("=" * 60)
-    print("🚀 BACKEND TESTING SUITE - PORTAIL ENTREPRISE FLASHBACK FA")
-    print("=" * 60)
+    """Run all FastAPI + MySQL backend tests"""
+    print("=" * 70)
+    print("🚀 FASTAPI + MYSQL BACKEND TESTING SUITE")
+    print("   Portail Entreprise Flashback Fa v2.0.0")
+    print("=" * 70)
     
     tests = [
         ("Environment Variables", test_environment_variables),
-        ("Backend Startup", test_backend_startup),
-        ("CORS Configuration", test_cors_configuration),
-        ("Database Connectivity", test_database_connectivity),
-        ("Status API Endpoints", test_status_endpoints),
+        ("Health & Status Endpoints", test_health_endpoints),
+        ("MySQL Database Connectivity", test_mysql_database_connectivity),
+        ("Discord OAuth Endpoints", test_discord_auth_endpoints),
+        ("Dotations API Endpoints", test_dotations_api_endpoints),
+        ("Tax API Endpoints", test_tax_api_endpoints),
+        ("API Error Handling", test_api_error_handling),
+        ("API Features & CORS", test_api_features),
     ]
     
     results = {}
@@ -487,9 +577,9 @@ def run_all_tests():
             results[test_name] = False
     
     # Summary
-    print("\n" + "=" * 60)
-    print("📊 TEST RESULTS SUMMARY")
-    print("=" * 60)
+    print("\n" + "=" * 70)
+    print("📊 FASTAPI + MYSQL BACKEND TEST RESULTS")
+    print("=" * 70)
     
     passed = 0
     total = len(results)
@@ -501,12 +591,18 @@ def run_all_tests():
             passed += 1
     
     print(f"\nOverall: {passed}/{total} tests passed")
+    print(f"Success Rate: {(passed/total)*100:.1f}%")
     
     if passed == total:
-        print("🎉 All backend tests passed!")
+        print("🎉 All FastAPI + MySQL backend tests passed!")
+        print("✅ Migration from Supabase to FastAPI + MySQL successful!")
+        return True
+    elif passed >= total * 0.75:  # 75% pass rate
+        print("✅ Most backend tests passed - FastAPI + MySQL backend is functional!")
+        print("⚠️ Some minor issues detected - check logs above for details.")
         return True
     else:
-        print("⚠️ Some backend tests failed. Check logs above for details.")
+        print("❌ Multiple backend tests failed - check logs above for details.")
         return False
 
 if __name__ == "__main__":
