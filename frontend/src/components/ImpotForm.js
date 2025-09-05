@@ -71,6 +71,36 @@ const ImpotForm = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      const exportData = [{
+        name: `Déclaration ${userEntreprise}`,
+        income: formData.revenus_imposables,
+        wealth: formData.revenus_totaux - formData.revenus_imposables,
+        incomeTaxBracket: getTaxBracket(formData.revenus_imposables),
+        incomeTaxRate: formData.taux_impot * 100,
+        incomeTaxAmount: formData.impot_calcule,
+        wealthTaxBracket: 'N/A',
+        wealthTaxRate: 0,
+        wealthTaxAmount: 0,
+        totalTax: formData.impot_calcule,
+        calculationDate: new Date().toLocaleDateString('fr-FR')
+      }];
+
+      exportImpots(exportData, `impots_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+
+  const getTaxBracket = (revenus) => {
+    if (revenus <= 100000) return 'Tranche 1 (0-100k)';
+    if (revenus <= 500000) return 'Tranche 2 (100k-500k)';
+    return 'Tranche 3 (500k+)';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
