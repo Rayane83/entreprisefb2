@@ -203,18 +203,38 @@ const BlanchimentToggle = () => {
             <Switch
               checked={blanchimentEnabled}
               onCheckedChange={setBlanchimentEnabled}
-              disabled={readonly}
+              disabled={!canManageBlanchiment} // Seul le staff peut activer/désactiver
             />
             <Label className="text-sm">
               {blanchimentEnabled ? 'Activé' : 'Désactivé'}
             </Label>
           </div>
-          {!readonly && (
-            <Button onClick={handleSave} disabled={loading}>
-              <Save className="w-4 h-4 mr-2" />
-              Sauvegarder
-            </Button>
-          )}
+          
+          <div className="flex items-center space-x-2">
+            {blanchimentEnabled && rows.length > 0 && (
+              <Button variant="outline" onClick={handleExportExcel}>
+                <Download className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
+            )}
+            
+            {!readonly && blanchimentEnabled && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPasteArea(!showPasteArea)}
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Coller Données
+              </Button>
+            )}
+            
+            {!readonly && (
+              <Button onClick={handleSave} disabled={loading}>
+                <Save className="w-4 h-4 mr-2" />
+                Sauvegarder
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
