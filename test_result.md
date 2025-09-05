@@ -203,6 +203,19 @@ deployment:
         agent: "main"
         comment: "✅ MIGRATION ARCHITECTURALE COMPLÈTE TERMINÉE - Supabase → FastAPI + MySQL + SQLAlchemy + Alembic réussie. 15+ tables relationnelles créées, 20+ endpoints REST implémentés, authentification Discord OAuth native, système d'audit, exports PDF/Excel, CRUD complet. Application prête pour production avec vraies APIs."
 
+security:
+  - task: "Configuration sécurisée des tokens Discord"
+    implemented: true
+    working: true
+    file: "configure-discord-tokens.sh, run-app.sh"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ SÉCURITÉ RENFORCÉE - Scripts de configuration sécurisée créés. Tokens Discord non exposés dans le code, saisie masquée, validation automatique, sauvegarde des .env avec timestamp. Scripts: ./configure-discord-tokens.sh (config sécurisée), ./run-app.sh (lancement intelligent), ./demo-configuration.sh (démonstration). Production prête avec authentification Discord OAuth réelle."
+
   - task: "Configuration MongoDB"
     implemented: true
     working: true
