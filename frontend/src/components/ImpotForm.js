@@ -112,6 +112,11 @@ const ImpotForm = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Button onClick={handleExportExcel} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
+          
           {!readonly && (
             <>
               <Button onClick={handleSave} variant="outline" disabled={loading}>
