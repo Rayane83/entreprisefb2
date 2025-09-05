@@ -23,9 +23,9 @@ def get_backend_url():
         print(f"❌ Error reading frontend .env: {e}")
         return None
 
-def test_backend_startup():
-    """Test if backend server is running and accessible"""
-    print("\n🔍 Testing Backend Server Startup...")
+def test_health_endpoints():
+    """Test health and status endpoints"""
+    print("\n🔍 Testing Health & Status Endpoints...")
     
     backend_url = get_backend_url()
     if not backend_url:
@@ -36,18 +36,59 @@ def test_backend_startup():
     
     try:
         # Test root endpoint
+        print("Testing GET / (root endpoint)...")
+        response = requests.get(f"{backend_url}/", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "Portail Entreprise Flashback Fa" in data.get("message", ""):
+                print("✅ Root endpoint working - FastAPI v2.0.0 detected")
+            else:
+                print(f"⚠️ Unexpected root response: {data}")
+        else:
+            print(f"❌ Root endpoint returned status code: {response.status_code}")
+            return False
+            
+        # Test health endpoint
+        print("Testing GET /health...")
+        response = requests.get(f"{backend_url}/health", timeout=10)
+        if response.status_code == 200:
+            health_data = response.json()
+            if health_data.get("status") in ["healthy", "degraded"]:
+                print(f"✅ Health endpoint working - Status: {health_data.get('status')}")
+                print(f"   Database: {health_data.get('database', 'unknown')}")
+                print(f"   Version: {health_data.get('version', 'unknown')}")
+                if health_data.get("database") == "connected":
+                    print("✅ MySQL database connection verified")
+                else:
+                    print("⚠️ Database connection issue detected")
+            else:
+                print(f"❌ Unexpected health response: {health_data}")
+                return False
+        else:
+            print(f"❌ Health endpoint returned status code: {response.status_code}")
+            return False
+            
+        # Test compatibility endpoints
+        print("Testing GET /api/ (compatibility)...")
         response = requests.get(f"{backend_url}/api/", timeout=10)
         if response.status_code == 200:
             data = response.json()
-            if data.get("message") == "Hello World":
-                print("✅ Backend server is running and accessible")
-                return True
+            if "API Portail Entreprise Flashback Fa" in data.get("message", ""):
+                print("✅ API compatibility endpoint working")
             else:
-                print(f"❌ Unexpected response: {data}")
-                return False
-        else:
-            print(f"❌ Backend returned status code: {response.status_code}")
-            return False
+                print(f"⚠️ Unexpected API response: {data}")
+        
+        print("Testing GET /api/status (compatibility)...")
+        response = requests.get(f"{backend_url}/api/status", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "ok" and data.get("database") == "mysql":
+                print("✅ API status endpoint working - MySQL backend confirmed")
+            else:
+                print(f"⚠️ Unexpected status response: {data}")
+        
+        return True
+        
     except requests.exceptions.RequestException as e:
         print(f"❌ Failed to connect to backend: {e}")
         return False
