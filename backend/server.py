@@ -50,8 +50,9 @@ async def lifespan(app: FastAPI):
     # Vérifier la connexion à la base de données
     try:
         # Test de connexion
+        from sqlalchemy import text
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         logger.info("✅ Connexion à la base de données MySQL réussie")
     except Exception as e:
         logger.error(f"❌ Erreur de connexion à la base de données: {e}")
