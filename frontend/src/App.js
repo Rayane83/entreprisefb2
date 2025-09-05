@@ -9,6 +9,7 @@ import CompanyConfig from './pages/CompanyConfig';
 import Superadmin from './pages/Superadmin';
 import EnterpriseManagement from './pages/EnterpriseManagement';
 import NotFound from './pages/NotFound';
+import AuthCallback from './pages/AuthCallback';
 import './App.css';
 import './index.css';
 
