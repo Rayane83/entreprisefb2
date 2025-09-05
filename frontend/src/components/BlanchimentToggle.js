@@ -117,6 +117,67 @@ const BlanchimentToggle = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      const exportData = rows.map(row => ({
+        transactionDate: row.date_recu || '',
+        amount: row.somme || 0,
+        description: `${row.groupe} - ${row.employe}`,
+        flagged: row.statut === 'Suspendu',
+        riskLevel: row.statut === 'Suspendu' ? 'high' : 'low',
+        thresholdExceeded: (row.somme || 0) > 50000,
+        analysisDate: new Date().toLocaleDateString('fr-FR'),
+        comments: `Donneur: ${row.donneur_id}, Récepteur: ${row.recep_id}`
+      }));
+
+      exportBlanchiment(exportData, `blanchiment_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+
+  const handlePasteData = () => {
+    if (!pasteData.trim()) {
+      toast.error('Aucune donnée à traiter');
+      return;
+    }
+
+    try {
+      const expectedColumns = ['Date Transaction', 'Montant', 'Groupe', 'Employé', 'Donneur ID', 'Récepteur ID'];
+      const parsed = parseExcelData(pasteData, expectedColumns);
+
+      if (!parsed.success) {
+        toast.error(`Erreur de format: ${parsed.error}`);
+        return;
+      }
+
+      const newRows = parsed.data.map((row, index) => ({
+        id: `paste-${Date.now()}-${index}`,
+        statut: 'En cours',
+        date_recu: row['Date Transaction'] || row['Date'] || row['date'] || '',
+        date_rendu: '',
+        groupe: row['Groupe'] || row['groupe'] || '',
+        employe: row['Employé'] || row['employe'] || row['Employe'] || '',
+        donneur_id: row['Donneur ID'] || row['donneur'] || '',
+        recep_id: row['Récepteur ID'] || row['recep'] || row['recepteur'] || '',
+        somme: parseFloat(row['Montant'] || row['montant'] || row['Somme'] || 0),
+        duree: null,
+        entreprise_perc: currentSettings.perc_entreprise,
+        groupe_perc: currentSettings.perc_groupe
+      }));
+
+      setRows(prev => [...newRows, ...prev]);
+      setPasteData('');
+      setShowPasteArea(false);
+      toast.success(`${newRows.length} opération(s) ajoutée(s) depuis les données collées`);
+    } catch (error) {
+      console.error('Erreur traitement données:', error);
+      toast.error('Erreur lors du traitement des données');
+    }
+  };
+
   const getStatutColor = (statut) => {
     switch (statut) {
       case 'En cours': return 'bg-blue-100 text-blue-800';
