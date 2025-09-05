@@ -5,10 +5,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
-import { Plus, Trash2, Save, AlertTriangle } from 'lucide-react';
+import { Textarea } from './ui/textarea';
+import { Plus, Trash2, Save, AlertTriangle, Upload, Download, FileSpreadsheet, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { mockBlanchimentRows } from '../data/mockData';
+import { exportBlanchiment, parseExcelData, formatBlanchimentData } from '../utils/excelExport';
 
 const BlanchimentToggle = () => {
   const { userEntreprise, isReadOnlyForStaff, canAccessStaffConfig } = useAuth();
