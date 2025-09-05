@@ -27,7 +27,7 @@ sed -i 's/NODE_ENV=development/NODE_ENV=production/' /app/frontend/.env
 sed -i 's/REACT_APP_PRODUCTION_MODE=false/REACT_APP_PRODUCTION_MODE=true/' /app/frontend/.env
 sed -i 's/REACT_APP_USE_MOCK_AUTH=true/REACT_APP_USE_MOCK_AUTH=false/' /app/frontend/.env
 sed -i 's/REACT_APP_FORCE_DISCORD_AUTH=false/REACT_APP_FORCE_DISCORD_AUTH=true/' /app/frontend/.env
-sed -i 's|REACT_APP_BACKEND_URL=http://localhost:8001|REACT_APP_BACKEND_URL=https://flashbackfa-portal.preview.emergentagent.com|' /app/frontend/.env
+sed -i 's|REACT_APP_BACKEND_URL=http://localhost:8001|REACT_APP_BACKEND_URL=https://enterprise-finance-2.preview.emergentagent.com|' /app/frontend/.env
 
 echo "✅ Configuration production appliquée"
 
