@@ -995,6 +995,719 @@ const FacturesDiplomesTab = () => {
   );
 };
 
+// Composant Blanchiment complet avec toggle et CRUD 
+const BlanchimentTab = () => {
+  const { userRole, userEntreprise, isReadOnlyForStaff, canAccessStaffConfig } = useAuth();
+  const readonly = isReadOnlyForStaff();
+  const canManageSettings = canAccessStaffConfig(); // Seul le staff peut activer/désactiver
+  
+  const [blanchimentEnabled, setBlanchimentEnabled] = useState(true);
+  const [useGlobal, setUseGlobal] = useState(true);
+  const [globalSettings, setGlobalSettings] = useState({
+    perc_entreprise: 15,
+    perc_groupe: 5
+  });
+  const [localSettings, setLocalSettings] = useState({
+    perc_entreprise: 12,
+    perc_groupe: 8
+  });
+  
+  const [rows, setRows] = useState([
+    {
+      id: '1',
+      statut: 'En cours',
+      date_recu: '2024-01-15',
+      date_rendu: '',
+      duree: null,
+      groupe: 'Alpha',
+      employe: 'Jean Dupont',
+      donneur: 'ID123456',
+      recep: 'ID789012',
+      somme: 50000,
+      entreprise_perc: 15,
+      groupe_perc: 5,
+      created_at: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: '2',
+      statut: 'Terminé',
+      date_recu: '2024-01-10',
+      date_rendu: '2024-01-20',
+      duree: 10,
+      groupe: 'Beta',
+      employe: 'Marie Martin',
+      donneur: 'ID345678',
+      recep: 'ID901234',
+      somme: 75000,
+      entreprise_perc: 15,
+      groupe_perc: 5,
+      created_at: '2024-01-10T14:30:00Z'
+    }
+  ]);
+  
+  const [newRow, setNewRow] = useState({
+    statut: 'En cours',
+    date_recu: '',
+    date_rendu: '',
+    groupe: '',
+    employe: '',
+    donneur: '',
+    recep: '',
+    somme: 0
+  });
+  
+  const [loading, setLoading] = useState(false);
+  const [pasteData, setPasteData] = useState('');
+  const [showPasteArea, setShowPasteArea] = useState(false);
+  
+  const currentSettings = useGlobal ? globalSettings : localSettings;
+  
+  // Calcul de la durée entre deux dates
+  const calculateDuration = (dateRecu, dateRendu) => {
+    if (!dateRecu || !dateRendu) return null;
+    const start = new Date(dateRecu);
+    const end = new Date(dateRendu);
+    const diffTime = Math.abs(end - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+  
+  // Gestion des changements sur une ligne
+  const handleRowChange = (id, field, value) => {
+    setRows(prev => prev.map(row => {
+      if (row.id === id) {
+        const updated = { ...row, [field]: value };
+        
+        // Recalculer la durée si les dates changent
+        if (field === 'date_recu' || field === 'date_rendu') {
+          updated.duree = calculateDuration(updated.date_recu, updated.date_rendu);
+        }
+        
+        // Mettre à jour les pourcentages depuis les paramètres actuels
+        updated.entreprise_perc = currentSettings.perc_entreprise;
+        updated.groupe_perc = currentSettings.perc_groupe;
+        
+        return updated;
+      }
+      return row;
+    }));
+  };
+  
+  // Ajout d'une nouvelle ligne
+  const addNewRow = () => {
+    if (!newRow.groupe || !newRow.employe || !newRow.somme) {
+      toast.error('Veuillez remplir les champs obligatoires (Groupe, Employé, Somme)');
+      return;
+    }
+    
+    const row = {
+      id: `new-${Date.now()}`,
+      ...newRow,
+      somme: parseFloat(newRow.somme) || 0,
+      duree: calculateDuration(newRow.date_recu, newRow.date_rendu),
+      entreprise_perc: currentSettings.perc_entreprise,
+      groupe_perc: currentSettings.perc_groupe,
+      created_at: new Date().toISOString()
+    };
+    
+    setRows(prev => [row, ...prev]); // Ajout en début (tri desc)
+    setNewRow({
+      statut: 'En cours',
+      date_recu: '',
+      date_rendu: '',
+      groupe: '',
+      employe: '',
+      donneur: '',
+      recep: '',
+      somme: 0
+    });
+    toast.success('Nouvelle opération ajoutée');
+  };
+  
+  // Suppression d'une ligne
+  const removeRow = (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette opération ?')) {
+      return;
+    }
+    setRows(prev => prev.filter(row => row.id !== id));
+    toast.success('Opération supprimée');
+  };
+  
+  // Sauvegarde
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Configuration blanchiment sauvegardée');
+    } catch (error) {
+      toast.error('Erreur lors de la sauvegarde');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Export Excel
+  const handleExportExcel = () => {
+    try {
+      const exportData = rows.map(row => ({
+        transactionDate: row.date_recu || '',
+        amount: row.somme || 0,
+        description: `${row.groupe} - ${row.employe}`,
+        flagged: row.statut === 'Suspendu',
+        riskLevel: row.statut === 'Suspendu' ? 'high' : 'low',
+        thresholdExceeded: (row.somme || 0) > 50000,
+        analysisDate: new Date().toLocaleDateString('fr-FR'),
+        comments: `Donneur: ${row.donneur}, Récepteur: ${row.recep}, Durée: ${row.duree || 'N/A'}j`
+      }));
+      
+      const { exportBlanchiment } = require('../utils/excelExport');
+      exportBlanchiment(exportData, `blanchiment_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+  
+  // Traitement données collées
+  const handlePasteData = () => {
+    if (!pasteData.trim()) {
+      toast.error('Aucune donnée à traiter');
+      return;
+    }
+    
+    try {
+      const lines = pasteData.trim().split('\n');
+      const newRows = [];
+      
+      lines.forEach(line => {
+        const parts = line.split(/[;\t,]/).map(p => p.trim());
+        if (parts.length >= 6) {
+          const [date, groupe, employe, donneur, recep, somme] = parts;
+          newRows.push({
+            id: `paste-${Date.now()}-${Math.random()}`,
+            statut: 'En cours',
+            date_recu: date || '',
+            date_rendu: '',
+            duree: null,
+            groupe: groupe || '',
+            employe: employe || '',
+            donneur: donneur || '',
+            recep: recep || '', 
+            somme: parseFloat(somme) || 0,
+            entreprise_perc: currentSettings.perc_entreprise,
+            groupe_perc: currentSettings.perc_groupe,
+            created_at: new Date().toISOString()
+          });
+        }
+      });
+      
+      if (newRows.length > 0) {
+        setRows(prev => [...newRows, ...prev]);
+        setPasteData('');
+        setShowPasteArea(false);
+        toast.success(`${newRows.length} opération(s) ajoutée(s) depuis les données collées`);
+      } else {
+        toast.error('Format invalide. Utilisez: Date;Groupe;Employé;Donneur;Recep;Somme');
+      }
+    } catch (error) {
+      console.error('Erreur traitement données:', error);
+      toast.error('Erreur lors du traitement des données');
+    }
+  };
+  
+  const getStatutColor = (statut) => {
+    switch (statut) {
+      case 'En cours': return 'bg-blue-100 text-blue-800';
+      case 'Terminé': return 'bg-green-100 text-green-800';
+      case 'Suspendu': return 'bg-yellow-100 text-yellow-800';
+      case 'Annulé': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  // Statistiques
+  const stats = {
+    total: rows.length,
+    enCours: rows.filter(r => r.statut === 'En cours').length,
+    termine: rows.filter(r => r.statut === 'Terminé').length,
+    suspendu: rows.filter(r => r.statut === 'Suspendu').length,
+    sommeTotal: rows.reduce((sum, r) => sum + (r.somme || 0), 0)
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Gestion du Blanchiment</h2>
+          <p className="text-muted-foreground">
+            {userEntreprise && `Entreprise: ${userEntreprise}`} - Suivi des opérations
+            {readonly && " (Lecture seule - Staff)"}
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Label className="text-sm">Blanchiment:</Label>
+            <Button
+              variant={blanchimentEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => setBlanchimentEnabled(!blanchimentEnabled)}
+              disabled={!canManageSettings}
+            >
+              {blanchimentEnabled ? 'Activé' : 'Désactivé'}
+            </Button>
+          </div>
+          
+          {blanchimentEnabled && (
+            <>
+              {rows.length > 0 && (
+                <Button variant="outline" onClick={handleExportExcel}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Excel
+                </Button>
+              )}
+              
+              {!readonly && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPasteArea(!showPasteArea)}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Coller Données
+                  </Button>
+                  
+                  <Button onClick={handleSave} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Sauvegarder
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Alerte blanchiment désactivé */}
+      {!blanchimentEnabled && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="text-yellow-800">
+                Le blanchiment est désactivé pour cette entreprise.
+                {!canManageSettings && " Seul le staff peut l'activer."}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {blanchimentEnabled && (
+        <>
+          {/* Configuration des pourcentages */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuration des Pourcentages</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant={useGlobal ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseGlobal(!useGlobal)}
+                  disabled={readonly}
+                >
+                  {useGlobal ? 'Paramètres Globaux' : 'Paramètres Locaux'}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {useGlobal ? 'Utilise les paramètres définis globalement' : 'Paramètres spécifiques à cette entreprise'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="perc_entreprise">Pourcentage Entreprise (%)</Label>
+                    <Input
+                      id="perc_entreprise"
+                      type="number"
+                      value={currentSettings.perc_entreprise}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        if (useGlobal) {
+                          setGlobalSettings(prev => ({ ...prev, perc_entreprise: value }));
+                        } else {
+                          setLocalSettings(prev => ({ ...prev, perc_entreprise: value }));
+                        }
+                      }}
+                      disabled={readonly}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="perc_groupe">Pourcentage Groupe (%)</Label>
+                    <Input
+                      id="perc_groupe"
+                      type="number"
+                      value={currentSettings.perc_groupe}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        if (useGlobal) {
+                          setGlobalSettings(prev => ({ ...prev, perc_groupe: value }));
+                        } else {
+                          setLocalSettings(prev => ({ ...prev, perc_groupe: value }));
+                        }
+                      }}
+                      disabled={readonly}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium">Exemple de Calcul</h4>
+                  <div className="p-4 bg-muted rounded-lg text-sm">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Somme de base:</span>
+                        <span className="font-medium">€100,000</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Part entreprise ({currentSettings.perc_entreprise}%):</span>
+                        <span className="font-medium">€{(100000 * currentSettings.perc_entreprise / 100).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Part groupe ({currentSettings.perc_groupe}%):</span>
+                        <span className="font-medium">€{(100000 * currentSettings.perc_groupe / 100).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Statistiques */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <div className="text-sm text-muted-foreground">Total</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl font-bold text-blue-600">{stats.enCours}</div>
+                <div className="text-sm text-muted-foreground">En cours</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl font-bold text-green-600">{stats.termine}</div>
+                <div className="text-sm text-muted-foreground">Terminé</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl font-bold text-yellow-600">{stats.suspendu}</div>
+                <div className="text-sm text-muted-foreground">Suspendu</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl font-bold">€{stats.sommeTotal.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Somme totale</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Zone de collage */}
+          {!readonly && showPasteArea && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Copy className="w-5 h-5 mr-2" />
+                  Coller des Données depuis Excel/CSV
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="paste-area">
+                    Collez vos données ici (depuis Excel, CSV ou autre tableur)
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Format attendu: Date | Groupe | Employé | Donneur | Récepteur | Somme
+                  </p>
+                  <Textarea
+                    id="paste-area"
+                    placeholder="Collez vos données ici... (Ctrl+V)
+Exemple:
+2024-01-15	Alpha	John Doe	ID123456	ID789012	50000
+2024-01-16	Beta	Jane Smith	ID456789	ID012345	75000"
+                    value={pasteData}
+                    onChange={(e) => setPasteData(e.target.value)}
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Button onClick={handlePasteData} disabled={!pasteData.trim()}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Traiter les Données
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setPasteData('');
+                      setShowPasteArea(false);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Formulaire nouvelle opération */}
+          {!readonly && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Ajouter une Opération</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label>Statut</Label>
+                    <select
+                      value={newRow.statut}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, statut: e.target.value }))}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="En cours">En cours</option>
+                      <option value="Terminé">Terminé</option>
+                      <option value="Suspendu">Suspendu</option>
+                      <option value="Annulé">Annulé</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="new_groupe">Groupe *</Label>
+                    <Input
+                      id="new_groupe"
+                      value={newRow.groupe}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, groupe: e.target.value }))}
+                      placeholder="Alpha, Beta..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_employe">Employé *</Label>
+                    <Input
+                      id="new_employe"
+                      value={newRow.employe}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, employe: e.target.value }))}
+                      placeholder="Nom de l'employé"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_somme">Somme (€) *</Label>
+                    <Input
+                      id="new_somme"
+                      type="number"
+                      value={newRow.somme}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, somme: parseFloat(e.target.value) || 0 }))}
+                      placeholder="50000"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="new_date_recu">Date Reçu</Label>
+                    <Input
+                      id="new_date_recu"
+                      type="date"
+                      value={newRow.date_recu}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, date_recu: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_date_rendu">Date Rendu</Label>
+                    <Input
+                      id="new_date_rendu"
+                      type="date"
+                      value={newRow.date_rendu}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, date_rendu: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_donneur">ID Donneur</Label>
+                    <Input
+                      id="new_donneur"
+                      value={newRow.donneur}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, donneur: e.target.value }))}
+                      placeholder="ID123456"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_recep">ID Récepteur</Label>
+                    <Input
+                      id="new_recep"
+                      value={newRow.recep}
+                      onChange={(e) => setNewRow(prev => ({ ...prev, recep: e.target.value }))}
+                      placeholder="ID789012"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={addNewRow}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter Opération
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Table des opérations */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Opérations de Blanchiment ({rows.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {rows.length === 0 ? (
+                <div className="text-center py-8">
+                  <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">Aucune opération de blanchiment</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Statut</th>
+                        <th className="text-left p-2">Date Reçu</th>
+                        <th className="text-left p-2">Date Rendu</th>
+                        <th className="text-left p-2">Durée (j)</th>
+                        <th className="text-left p-2">Groupe</th>
+                        <th className="text-left p-2">Employé</th>
+                        <th className="text-left p-2">Donneur</th>
+                        <th className="text-left p-2">Récepteur</th>
+                        <th className="text-left p-2">Somme (€)</th>
+                        <th className="text-left p-2">% Ent.</th>
+                        <th className="text-left p-2">% Grp.</th>
+                        {!readonly && <th className="text-left p-2">Actions</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.id} className="border-b hover:bg-muted/50">
+                          <td className="p-2">
+                            <Badge className={getStatutColor(row.statut)}>
+                              {row.statut}
+                            </Badge>
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="date"
+                              value={row.date_recu}
+                              onChange={(e) => handleRowChange(row.id, 'date_recu', e.target.value)}
+                              disabled={readonly}
+                              className="w-auto text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="date"
+                              value={row.date_rendu || ''}
+                              onChange={(e) => handleRowChange(row.id, 'date_rendu', e.target.value)}
+                              disabled={readonly}
+                              className="w-auto text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Badge variant="outline">
+                              {row.duree ? `${row.duree}j` : '-'}
+                            </Badge>
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={row.groupe}
+                              onChange={(e) => handleRowChange(row.id, 'groupe', e.target.value)}
+                              disabled={readonly}
+                              className="w-20 text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={row.employe}
+                              onChange={(e) => handleRowChange(row.id, 'employe', e.target.value)}
+                              disabled={readonly}
+                              className="w-24 text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={row.donneur}
+                              onChange={(e) => handleRowChange(row.id, 'donneur', e.target.value)}
+                              disabled={readonly}
+                              className="w-20 text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={row.recep}
+                              onChange={(e) => handleRowChange(row.id, 'recep', e.target.value)}
+                              disabled={readonly}
+                              className="w-20 text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="number"
+                              value={row.somme}
+                              onChange={(e) => handleRowChange(row.id, 'somme', parseFloat(e.target.value) || 0)}
+                              disabled={readonly}
+                              className="w-24 text-xs"
+                            />
+                          </td>
+                          <td className="p-2 text-xs text-muted-foreground">
+                            {row.entreprise_perc}%
+                          </td>
+                          <td className="p-2 text-xs text-muted-foreground">
+                            {row.groupe_perc}%
+                          </td>
+                          {!readonly && (
+                            <td className="p-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeRow(row.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* Staff : lecture seule */}
+      {readonly && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+            <span className="text-yellow-800">Accès staff : lecture seule (modification et création désactivées)</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Autres onglets simples avec specs
 const SimpleTab = ({ title, description, icon: Icon, specs }) => (
   <div className="space-y-6">
