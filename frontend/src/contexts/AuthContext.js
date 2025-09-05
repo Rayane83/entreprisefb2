@@ -154,13 +154,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Connexion Discord OBLIGATOIRE
+  // Connexion Discord avec nouveau backend
   const loginWithDiscord = async () => {
     try {
       setLoading(true);
       console.log('🚀 Lancement authentification Discord...');
       
-      const { error } = await authService.signInWithDiscord();
+      const { error } = await newAuthService.signInWithDiscord();
       if (error) {
         console.error('Erreur connexion Discord:', error);
         setLoading(false);
@@ -180,13 +180,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log('🚪 Déconnexion...');
-      await authService.signOut();
-      
-      // Vider le stockage local
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      await newAuthService.signOut();
       
       setUser(null);
       setSession(null);
