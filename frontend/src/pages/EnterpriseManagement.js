@@ -61,7 +61,7 @@ const EnterpriseManagement = () => {
   });
 
   const handleAddEnterprise = async () => {
-    if (!newEnterprise.nom || !newEnterprise.discord_guild_id || !newEnterprise.main_role_id) {
+    if (!newEnterprise.nom || !newEnterprise.discord_guild_id || !newEnterprise.main_role_id || !newEnterprise.member_role_id) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
