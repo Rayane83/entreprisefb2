@@ -243,6 +243,28 @@ const DotationForm = () => {
     }
   };
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    try {
+      const exportData = employees.map(employee => ({
+        employeeName: employee.name,
+        grade: 'Employé',
+        baseSalary: employee.salaire,
+        multiplier: 1.0,
+        bonus: employee.prime,
+        totalAmount: employee.salaire + employee.prime,
+        reportDate: new Date().toLocaleDateString('fr-FR'),
+        status: 'Actif'
+      }));
+
+      exportDotations(exportData, `dotations_${userEntreprise}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
