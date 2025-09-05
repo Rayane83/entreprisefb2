@@ -174,6 +174,9 @@ const EnterpriseManagement = () => {
                   <Plus className="w-5 h-5 mr-2" />
                   Ajouter une Nouvelle Entreprise
                 </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  L'ID du rôle membre permet de compter automatiquement le nombre d'employés de l'entreprise dans Discord
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
