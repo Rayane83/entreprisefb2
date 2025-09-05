@@ -17,7 +17,7 @@ BACKEND_DIR="$APP_DIR/backend"
 DOMAIN="flashbackfa-entreprise.fr"
 
 # Token Discord fourni par l'utilisateur
-DISCORD_BOT_TOKEN="MTQwMjIzMTAzMTgwNDcyMzIxMA.GVE_1u.GjOK2cxqhSWhWI6RQatn5Lgm8O7O8alsIXKV2A"
+DISCORD_BOT_TOKEN="YOUR_DISCORD_BOT_TOKEN_HERE"
 
 # Couleurs
 RED='\033[0;31m'
