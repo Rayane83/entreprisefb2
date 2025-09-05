@@ -262,9 +262,13 @@ main() {
     echo -e "${PURPLE}Configuration Discord OAuth terminée avec succès ! 🎉${NC}"
 }
 
-# Vérifier qu'on est dans le bon répertoire
-if [[ ! -d "/app/backend" ]] || [[ ! -d "/app/frontend" ]]; then
-    echo -e "${RED}❌ Erreur: Ce script doit être exécuté depuis /app${NC}"
+# Détecter le répertoire de l'application automatiquement
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Vérifier qu'on est dans un répertoire d'application valide
+if [[ ! -d "$SCRIPT_DIR/backend" ]] || [[ ! -d "$SCRIPT_DIR/frontend" ]]; then
+    echo -e "${RED}❌ Erreur: Ce script doit être exécuté depuis le répertoire racine de l'application${NC}"
+    echo -e "${RED}   Répertoires backend/ et frontend/ introuvables dans: $SCRIPT_DIR${NC}"
     exit 1
 fi
 
