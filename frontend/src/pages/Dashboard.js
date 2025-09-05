@@ -1111,20 +1111,7 @@ const Dashboard = () => {
           {/* 5) Blanchiment — Route : /#blanchiment */}
           <TabsContent value="blanchiment" className="space-y-6">
             <RoleGate requiredAccess="canAccessBlanchiment">
-              <SimpleTab 
-                title="Blanchiment" 
-                description="Toggle entreprise (enabled/use_global), pourcentages, table lignes CRUD"
-                icon={DollarSign}
-                specs={[
-                  "Toggle entreprise (enabled/use_global)",
-                  "Pourcentages (global vs local), lecture calculée",
-                  "Table lignes : Statut | Date Reçu | Date Rendu | Durée (j) | Groupe | Employé | Donneur | Recep | Somme | % Entreprise | % Groupe",
-                  "Cols % en read-only, tri created_at desc",
-                  "CRUD local + Sauvegarder (upsert/insert)",
-                  "Accès : staff lecture-seule",
-                  "Exports : PDF 'BLANCHIMENT SUIVI' (50 lignes #1-50), Excel"
-                ]}
-              />
+              <BlanchimentTab />
             </RoleGate>
           </TabsContent>
 
