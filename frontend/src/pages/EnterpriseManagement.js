@@ -176,7 +176,7 @@ const EnterpriseManagement = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="nom">Nom de l'Entreprise *</Label>
                     <Input
@@ -195,6 +195,8 @@ const EnterpriseManagement = () => {
                       placeholder="1404608015230832742"
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="main_role_id">ID Rôle Principal *</Label>
                     <Input
@@ -202,6 +204,15 @@ const EnterpriseManagement = () => {
                       value={newEnterprise.main_role_id}
                       onChange={(e) => setNewEnterprise(prev => ({ ...prev, main_role_id: e.target.value }))}
                       placeholder="1404608015230832745"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="member_role_id">ID Rôle Membre (pour compter employés) *</Label>
+                    <Input
+                      id="member_role_id"
+                      value={newEnterprise.member_role_id}
+                      onChange={(e) => setNewEnterprise(prev => ({ ...prev, member_role_id: e.target.value }))}
+                      placeholder="1404608015230832748"
                     />
                   </div>
                 </div>
