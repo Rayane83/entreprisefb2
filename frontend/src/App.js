@@ -90,6 +90,16 @@ function App() {
                 } 
               />
               
+              {/* Gestion des entreprises */}
+              <Route 
+                path="/enterprise-management" 
+                element={
+                  <ProtectedRoute>
+                    <EnterpriseManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              
               {/* Pages d'erreur */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
