@@ -11,6 +11,7 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import RoleGate from '../components/RoleGate';
+import { toast } from 'sonner';
 import { 
   Users,
   Calculator,
@@ -24,7 +25,11 @@ import {
   Archive,
   DollarSign,
   Building,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  Trash2,
+  Copy,
+  Plus
 } from 'lucide-react';
 
 // Composant Dotations avec zone collage et calculs
