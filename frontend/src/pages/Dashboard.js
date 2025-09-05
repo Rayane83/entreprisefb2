@@ -712,19 +712,7 @@ const Dashboard = () => {
 
           {/* 4) Factures / Diplômes — Route : /#docs */}
           <TabsContent value="docs" className="space-y-6">
-            <SimpleTab 
-              title="Factures / Diplômes" 
-              description="Upload (filtres MIME/taille), liste, aperçu, suppression (avec confirm)"
-              icon={FileText}
-              specs={[
-                "Upload avec filtres MIME/taille",
-                "Liste des documents",
-                "Aperçu des fichiers",
-                "Suppression avec confirmation",
-                "Stockage local/sécurisé (lecture rôle-based)",
-                "Lazy loading, toasts"
-              ]}
-            />
+            <FacturesDiplomesTab />
           </TabsContent>
 
           {/* 5) Blanchiment — Route : /#blanchiment */}
