@@ -40,8 +40,8 @@ print_info() {
 
 # Vérifier si Discord est configuré
 check_discord_config() {
-    local backend_env="/app/backend/.env"
-    local frontend_env="/app/frontend/.env"
+    local backend_env="$BACKEND_DIR/.env"
+    local frontend_env="$FRONTEND_DIR/.env"
     
     if [[ ! -f "$backend_env" ]] || [[ ! -f "$frontend_env" ]]; then
         return 1
