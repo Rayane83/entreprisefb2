@@ -115,56 +115,35 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Traitement utilisateur Discord RÉEL uniquement
-  const handleUserLogin = async (supabaseUser) => {
+  // Traitement utilisateur avec le nouveau backend
+  const handleUserLogin = async (userData) => {
     setLoading(true);
     
     try {
-      console.log('🔐 Traitement connexion Discord:', supabaseUser.email);
-      
-      // VÉRIFICATION STRICTE: Doit être Discord
-      if (supabaseUser.app_metadata?.provider !== 'discord') {
-        console.error('❌ Connexion non-Discord détectée, déconnexion forcée');
-        await authService.signOut();
-        throw new Error('Seule la connexion Discord est autorisée');
-      }
+      console.log('🔐 Traitement connexion utilisateur:', userData.discord_username);
 
-      // Récupérer les rôles Discord RÉELS
-      const { userRole, entreprise, error } = await authService.getUserGuildRoles();
+      // Récupérer les rôles depuis le backend
+      const { userRole, entreprise, error } = await newAuthService.getUserGuildRoles();
       
       if (error) {
-        console.error('Erreur récupération rôles Discord:', error);
-        // Ne pas faire throw, utiliser rôle par défaut
+        console.error('Erreur récupération rôles:', error);
+        // Continuer avec les données utilisateur de base
       }
 
-      // Données utilisateur RÉELLES Discord
-      const userData = {
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        discord_username: supabaseUser.user_metadata?.full_name || 
-                         supabaseUser.user_metadata?.name || 
-                         supabaseUser.user_metadata?.preferred_username || 
-                         'Utilisateur Discord',
-        discord_id: supabaseUser.user_metadata?.provider_id || 
-                   supabaseUser.user_metadata?.sub,
-        avatar_url: supabaseUser.user_metadata?.avatar_url,
-        entreprise: entreprise || 'Flashback Fa'
-      };
-
-      console.log('✅ Utilisateur Discord configuré:', userData.discord_username);
-      console.log('✅ Rôle Discord:', userRole);
+      console.log('✅ Utilisateur configuré:', userData.discord_username);
+      console.log('✅ Rôle:', userData.role);
 
       setUser(userData);
-      setSession(supabaseUser);
-      setUserRole(userRole || 'employe');
-      setUserEntreprise(entreprise || 'Flashback Fa');
+      setSession({ user: userData });
+      setUserRole(userData.role || userRole || 'employe');
+      setUserEntreprise(entreprise || userData.enterprise_id || 'Flashback Fa');
       setIsAuthenticated(true);
       
     } catch (error) {
-      console.error('❌ Erreur connexion Discord:', error);
+      console.error('❌ Erreur traitement connexion:', error);
       
-      // EN CAS D'ERREUR: DÉCONNEXION TOTALE
-      await authService.signOut();
+      // EN CAS D'ERREUR: DÉCONNEXION
+      await newAuthService.signOut();
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
