@@ -26,6 +26,10 @@ const Header = () => {
     navigate('/patron-config');
   };
 
+  const handleEnterpriseManagementClick = () => {
+    navigate('/enterprise-management');
+  };
+
   const roleInfo = mockUserRoles[userRole] || mockUserRoles.employe;
 
   return (
