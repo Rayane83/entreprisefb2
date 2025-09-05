@@ -265,6 +265,11 @@ const EnterpriseManagement = () => {
                             </Badge>
                           </td>
                           <td className="p-4">
+                            <Badge variant="outline" className="font-mono text-xs bg-orange-50 text-orange-700">
+                              {enterprise.member_role_id}
+                            </Badge>
+                          </td>
+                          <td className="p-4">
                             <Badge variant="outline" className="font-mono text-xs">
                               {enterprise.member_role_id}
                             </Badge>
